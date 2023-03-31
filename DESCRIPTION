@@ -1,10 +1,9 @@
 Package: NOAA.Explore.QAQC
 Title: What the Package Does (One Line, Title Case)
 Version: 0.0.0.9000
-Authors@R: c(
- .
-     )
-Description: What the package does (one paragraph).
+Authors@R:c(person("Sarah", "Groves", email = "sarah.groves@noaa.gov", role = c("cre", "aut")),
+            person("Katharine", "Egan", email = "katharine.egan@noaa.gov", role = c("ctb", "aut")))
+Description: Compiles and QAQC's biological and physical data collected by NOAA Ocean Exploration and R/V Okeanos Explorer.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
