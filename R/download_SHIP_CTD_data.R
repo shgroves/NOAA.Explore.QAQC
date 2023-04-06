@@ -49,8 +49,6 @@ download_SHIP_CTD_data <- function(expeditions, path, data_inventory, data_downl
 
 
   # Populate the data frame
-
-  ## First, filter to only 1 cruise
   for(i in expeditions) {
     p <- data.frame(Expedition)
     p$Expedition <- i
