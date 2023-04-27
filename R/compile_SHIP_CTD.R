@@ -41,9 +41,9 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
   oxygen3 <- ""
   upoly <- ""
   soundSpeed <- ""
+  turbidity <- ""
   pressure <- ""
   flag <- ""
-  #campaign <- ""
   expedition <- ""
   platform <- ""
   station <- ""
@@ -51,6 +51,7 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
   deployment_longitude <- ""
   deployment_latitude <- ""
   max_depth <- ""
+  year <- ""
 
   SHIP_CTD_data <- data.frame(depth = numeric(),
                               temperature = numeric(),
@@ -62,16 +63,17 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
                               oxygen3 = numeric(),
                               upoly = numeric(),
                               soundSpeed = numeric(),
+                              turbidity = numeric(),
                               pressure = numeric(),
                               flag = numeric(),
-                              #campaign = character(),
                               expedition = character(),
                               platform = character(),
                               station = character(),
                               cast = character(),
                               deployment_longitude = numeric(),
                               deployment_latitude = numeric(),
-                              max_depth = numeric()  )
+                              max_depth = numeric(),
+                              year = factor())
 
 
   for (i in expeditions) {
@@ -106,6 +108,35 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
 
     ## Loop through the list of CTD objects for a single expedition, extracting the data and key metadata, and compiling it all onto a single dataframe
 
+    ### Pull out EX1805 seperately bc it is missing so much metadata
+
+
+if(i == "1805") {
+
+  for (h in 1:length(file_data)){
+    tmp <- file_data[[h]]
+    tmp2 <- tmp@data %>%
+      as.data.frame() %>%
+      dplyr::mutate(filename = temp[[1]],
+                    expedition_num = i,
+                    platform = "EX",
+                    expedition = paste0(platform, expedition_num),
+                    station = paste0("ctd00", h),
+                    cast = station,
+                    deployment_longitude = tmp@metadata$longitude,
+                    deployment_latitude = tmp@metadata$latitude,
+                    max_depth = max(depth),
+                    date = tmp@metadata$date,
+                    year =  format(date, format = "%Y")) %>%
+      dplyr::select(-flag, -filename, -expedition_num, -date)
+
+    dat2 <- dplyr::bind_rows(dat2, tmp2)
+
+  }
+
+
+
+}else{
     for (h in 1:length(file_data)){
       tmp <- file_data[[h]]
       tmp2 <- tmp@data %>%
@@ -119,18 +150,22 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
                       cast = stringr::str_extract(string =filename, pattern = "ctd[0-9]+"),
                       deployment_longitude = tmp@metadata$longitude,
                       deployment_latitude = tmp@metadata$latitude,
-                      max_depth = max(depth)) %>%
-        dplyr::select(-flag, -filename, -expedition_num)
+                      max_depth = max(depth),
+                      date = tmp@metadata$date,
+                      year =  format(date, format = "%Y")) %>%
+        dplyr::select(-flag, -filename, -expedition_num, -date)
 
       dat2 <- dplyr::bind_rows(dat2, tmp2)
+
+    }
 
     }
 
   # Compile the CTD data from each expedition into a single dataframe
 
     SHIP_CTD_data <- dplyr::bind_rows(SHIP_CTD_data, dat2) %>%
-      dplyr::select(platform, expedition, station, cast, deployment_latitude, deployment_longitude, max_depth, depth,
-                    temperature, conductivity, salinity, density, oxygen, oxygen2, oxygen3, upoly, soundSpeed,
+      dplyr::select(platform, year, expedition, station, cast, deployment_latitude, deployment_longitude, max_depth, depth,
+                    temperature, conductivity, salinity, density, oxygen, oxygen2, oxygen3, upoly, soundSpeed, turbidity,
                     pressure)
 
   }
