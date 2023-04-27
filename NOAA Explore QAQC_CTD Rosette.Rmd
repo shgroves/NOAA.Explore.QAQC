@@ -200,7 +200,7 @@ missing_latlon <- unique(ctd_missing_latlon$ex_cast)
 ```{r map, fig.height = 10, fig.width = 10, echo = FALSE, fig.cap="**Fig. 1.** Map of all CTD Rosette cast locations colored by expedition. See table 4 for expeditions and cast missing latitude and longitude and therefore not included on the map." }
 
 # register google key
-ggmap::register_google(key = "AIzaSyBl6Xqw5P353DgNOWpz-VmCTMzuYN-CUAo") # key is here 
+ggmap::register_google(key = "") # key is here 
 
 
 mean_lon <- mean(ASPIRE_SHIP_CTD_data$deployment_longitude, na.rm = T)
