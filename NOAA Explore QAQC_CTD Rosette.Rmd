@@ -227,16 +227,32 @@ map
 #ggplotly(map)
 ```
 
+**Step 4:** Check sensors
+---------------
 
-**Step 4:** Run summary statistics.
+**Table 5.** Sensors used and units of measure for each cast. 
+```{r}
+
+dat_sen <- ASPIRE_SHIP_CTD_data %>%
+  dplyr::select(expedition, cast, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30) %>%
+  unique(.)
+
+DT::datatable(dat_sen, rownames = F) 
+
+```
+
+Across all casts, the units for each sensor used should be consistent. The oxygen sensors are the most likely to be mixed as there are multiple sensors and units for output and you can assign any unit to any output (labeled oxygen, oxygen2, and oxygen3). Any record of a sensor not being used should be checked in the .hex file and with what is recorded in the CTD Summary Doc to make sure the data were not omitted in the transformation from .hex to .cnv.
+
+
+**Step 5:** Run summary statistics
 ---------------
 
 
-**Table 5.** Summary statistics for each sensor used on each cast. Blank cells indicate the sensor was not in use. 
+**Table 6.** Summary statistics for each sensor used on each cast. Blank cells indicate the sensor was not in use. 
 ```{r}
 
 dat_sum <- ASPIRE_SHIP_CTD_data %>%
-  dplyr::select(expedition, cast, 9:19) %>%
+  dplyr::select(expedition, cast, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29) %>%
   tidyr::pivot_longer(cols = c(3:length(.)), names_to = "sensor", values_to = "value") %>%
   dplyr::group_by(expedition, cast, sensor) %>%
   dplyr::summarise(mean = mean(value),
@@ -245,13 +261,13 @@ dat_sum <- ASPIRE_SHIP_CTD_data %>%
                    max = max(value),
                    median = median(value),
                    .groups = "keep") %>%
-  dplyr::mutate(across(where(is.numeric), round, 3))
+  dplyr::mutate(across(where(is.numeric), round, 7))
 
 DT::datatable(dat_sum, rownames = F) 
 
 ```
 
-**Step 5:** Plot the data
+**Step 6:** Plot the data
 ---------------
 
 ## Plots {.tabset}
@@ -259,7 +275,7 @@ DT::datatable(dat_sum, rownames = F)
 ### Depth boxplots
 
 
-```{r ctd boxplots, fig.height = 8, fig.width = 12, echo = FALSE, fig.cap="**Fig. 2.** Box-plots of each CTD Rosette cast by expedition"}
+```{r ctd depth boxplots, fig.height = 8, fig.width = 12, echo = FALSE, fig.cap="**Fig. 2.** Box-plots of each CTD Rosette cast by expedition"}
 
 
 # N casts 
@@ -286,7 +302,44 @@ p
 
 ```
 
+### Oxygen sensor boxplots
 
+```{r ctd O2 boxplots, fig.height = 12, fig.width = 12, echo = FALSE, fig.cap="**Fig. 2.** Box-plots of each CTD Rosette cast by expedition"}
+
+
+# N casts 
+
+plot <- ggplot(data = ASPIRE_SHIP_CTD_data, 
+               aes(x = oxygen, y=cast)) +
+  geom_boxplot() +
+  facet_grid(rows = vars(expedition), scales = "free", ) +
+  #guides(fill="none") +
+  #scale_y_reverse() +
+  labs(x = "Oxygen", y = "Cast") +
+  theme(axis.text.x = element_text(angle = 90, vjust = -0.2)) 
+
+plot
+#density_diver_hab_plot
+# p <- ggplotly(plot) %>% 
+#   hide_legend() %>% 
+#   layout(xaxis = list(autorange = TRUE)) 
+#  
+# 
+# p  
+
+plot2 <- ggplot(data = ASPIRE_SHIP_CTD_data, 
+               aes(x = oxygen2, y=cast)) +
+  geom_boxplot() +
+  facet_grid(rows = vars(expedition), scales = "free", ) +
+  #guides(fill="none") +
+  #scale_y_reverse() +
+  labs(x = "Oxygen", y = "Cast") +
+  theme(axis.text.x = element_text(angle = 90, vjust = -0.2)) 
+
+plot2
+
+
+```
 
 ```{r}
 

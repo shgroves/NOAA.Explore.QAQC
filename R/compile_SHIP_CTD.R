@@ -42,6 +42,7 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
   upoly <- ""
   soundSpeed <- ""
   turbidity <- ""
+  fluorescence <- ""
   pressure <- ""
   flag <- ""
   expedition <- ""
@@ -64,6 +65,7 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
                               upoly = numeric(),
                               soundSpeed = numeric(),
                               turbidity = numeric(),
+                              fluorescence = numeric(),
                               pressure = numeric(),
                               flag = numeric(),
                               expedition = character(),
@@ -111,65 +113,110 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
     ### Pull out EX1805 seperately bc it is missing so much metadata
 
 
-if(i == "1805") {
+    if(i == "1805") {
 
-  for (h in 1:length(file_data)){
-    tmp <- file_data[[h]]
-    tmp2 <- tmp@data %>%
-      as.data.frame() %>%
-      dplyr::mutate(filename = temp[[1]],
-                    expedition_num = i,
-                    platform = "EX",
-                    expedition = paste0(platform, expedition_num),
-                    station = paste0("ctd00", h),
-                    cast = station,
-                    deployment_longitude = tmp@metadata$longitude,
-                    deployment_latitude = tmp@metadata$latitude,
-                    max_depth = max(depth),
-                    date = tmp@metadata$date,
-                    year =  format(date, format = "%Y")) %>%
-      dplyr::select(-flag, -filename, -expedition_num, -date)
+      for (h in 1:length(file_data)){
+        tmp <- file_data[[h]]
+        tmp2 <- tmp@data %>%
+          as.data.frame() %>%
+          dplyr::mutate(filename = temp[[1]],
+                        expedition_num = i,
+                        platform = "EX",
+                        expedition = paste0(platform, expedition_num),
+                        station = paste0("ctd00", h),
+                        cast = station,
+                        deployment_longitude = tmp@metadata$longitude,
+                        deployment_latitude = tmp@metadata$latitude,
+                        max_depth = max(depth),
+                        date = tmp@metadata$date,
+                        year =  format(date, format = "%Y")) %>%
 
-    dat2 <- dplyr::bind_rows(dat2, tmp2)
+          #Pull out all the units for each sensor to check for consistency across casts
+          dplyr::mutate(depth_unit = ifelse(length(as.character(tmp@metadata$units$depth$unit)) > 0, as.character(tmp@metadata$units$depth$unit),
+                                            "Sensor not used"),
+                        temp_unit = ifelse(length(as.character(tmp@metadata$units$temperature$unit)) > 0, as.character(tmp@metadata$units$temperature$unit),
+                                           "Sensor not used"),
+                        cond_unit = ifelse(length(as.character(tmp@metadata$units$conductivity$unit)) > 0, as.character(tmp@metadata$units$conductivity$unit),
+                                           "Sensor not used"),
+                        sal_unit = ifelse(length(as.character(tmp@metadata$units$salinity$scale)) > 0, as.character(tmp@metadata$units$salinity$scale),
+                                          "Sensor not used"),
+                        den_unit = ifelse(length(as.character(tmp@metadata$units$density$unit)) > 0, as.character(tmp@metadata$units$density$unit),
+                                          "Sensor not used"),
+                        oxy_unit = ifelse(length(as.character(tmp@metadata$units$oxygen$unit)) > 0, as.character(tmp@metadata$units$oxygen$unit),
+                                          "Sensor not used"),
+                        oxy2_unit = ifelse(length(as.character(tmp@metadata$units$oxygen2$unit)) > 0, as.character(tmp@metadata$units$oxygen2$unit),
+                                           "Sensor not used"),
+                        sS_unit = ifelse(length(as.character(tmp@metadata$units$soundSpeed$unit)) > 0, as.character(tmp@metadata$units$soundSpeed$unit),
+                                         "Sensor not used"),
+                        turb_unit = ifelse(length(as.character(tmp@metadata$units$turbidity$unit)) > 0, as.character(tmp@metadata$units$turbidity$unit),
+                                           "Sensor not used"),
+                        fluor_unit = ifelse(length(as.character(tmp@metadata$units$fluorescence$unit)) > 0, as.character(tmp@metadata$units$fluorescence$unit),
+                                            "Sensor not used"),
+                        upoly_unit = ifelse(length(as.character(tmp@metadata$units$upoly$unit)) > 0, as.character(tmp@metadata$units$upoly$unit),
+                                            "Sensor not used")) %>%
+          dplyr::select(-flag, -filename, -expedition_num, -date)
 
-  }
+        dat2 <- dplyr::bind_rows(dat2, tmp2)
 
+      }
 
+    }else{
+      for (h in 1:length(file_data)){
+        tmp <- file_data[[h]]
+        tmp2 <- tmp@data %>%
+          as.data.frame() %>%
+          dplyr::mutate(filename = tmp@metadata$hexfilename,
+                        expedition_num = i,
+                        #expedition_num = substr(filename, 13, 16),
+                        platform = tmp@metadata$ship,
+                        expedition = paste0(platform, expedition_num),
+                        station = tmp@metadata$station,
+                        cast = stringr::str_extract(string =filename, pattern = "ctd[0-9]+"),
+                        deployment_longitude = tmp@metadata$longitude,
+                        deployment_latitude = tmp@metadata$latitude,
+                        max_depth = max(depth),
+                        date = tmp@metadata$date,
+                        year =  format(date, format = "%Y")) %>%
+          #Pull out all the units for each sensor to check for consistency across casts
+          dplyr::mutate(depth_unit = ifelse(length(as.character(tmp@metadata$units$depth$unit)) > 0, as.character(tmp@metadata$units$depth$unit),
+                                            "Sensor not used"),
+                        temp_unit = ifelse(length(as.character(tmp@metadata$units$temperature$unit)) > 0, as.character(tmp@metadata$units$temperature$unit),
+                                           "Sensor not used"),
+                        cond_unit = ifelse(length(as.character(tmp@metadata$units$conductivity$unit)) > 0, as.character(tmp@metadata$units$conductivity$unit),
+                                           "Sensor not used"),
+                        sal_unit = ifelse(length(as.character(tmp@metadata$units$salinity$scale)) > 0, as.character(tmp@metadata$units$salinity$scale),
+                                          "Sensor not used"),
+                        den_unit = ifelse(length(as.character(tmp@metadata$units$density$unit)) > 0, as.character(tmp@metadata$units$density$unit),
+                                          "Sensor not used"),
+                        oxy_unit = ifelse(length(as.character(tmp@metadata$units$oxygen$unit)) > 0, as.character(tmp@metadata$units$oxygen$unit),
+                                          "Sensor not used"),
+                        oxy2_unit = ifelse(length(as.character(tmp@metadata$units$oxygen2$unit)) > 0, as.character(tmp@metadata$units$oxygen2$unit),
+                                           "Sensor not used"),
+                        sS_unit = ifelse(length(as.character(tmp@metadata$units$soundSpeed$unit)) > 0, as.character(tmp@metadata$units$soundSpeed$unit),
+                                         "Sensor not used"),
+                        turb_unit = ifelse(length(as.character(tmp@metadata$units$turbidity$unit)) > 0, as.character(tmp@metadata$units$turbidity$unit),
+                                           "Sensor not used"),
+                        fluor_unit = ifelse(length(as.character(tmp@metadata$units$fluorescence$unit)) > 0, as.character(tmp@metadata$units$fluorescence$unit),
+                                            "Sensor not used"),
+                        upoly_unit = ifelse(length(as.character(tmp@metadata$units$upoly$unit)) > 0, as.character(tmp@metadata$units$upoly$unit),
+                                            "Sensor not used")) %>%
+          dplyr::select(-flag, -filename, -expedition_num, -date)
 
-}else{
-    for (h in 1:length(file_data)){
-      tmp <- file_data[[h]]
-      tmp2 <- tmp@data %>%
-        as.data.frame() %>%
-        dplyr::mutate(filename = tmp@metadata$hexfilename,
-                      expedition_num = i,
-                      #expedition_num = substr(filename, 13, 16),
-                      platform = tmp@metadata$ship,
-                      expedition = paste0(platform, expedition_num),
-                      station = tmp@metadata$station,
-                      cast = stringr::str_extract(string =filename, pattern = "ctd[0-9]+"),
-                      deployment_longitude = tmp@metadata$longitude,
-                      deployment_latitude = tmp@metadata$latitude,
-                      max_depth = max(depth),
-                      date = tmp@metadata$date,
-                      year =  format(date, format = "%Y")) %>%
-        dplyr::select(-flag, -filename, -expedition_num, -date)
+        dat2 <- dplyr::bind_rows(dat2, tmp2)
 
-      dat2 <- dplyr::bind_rows(dat2, tmp2)
+      }
 
     }
 
-    }
-
-  # Compile the CTD data from each expedition into a single dataframe
+    # Compile the CTD data from each expedition into a single dataframe
 
     SHIP_CTD_data <- dplyr::bind_rows(SHIP_CTD_data, dat2) %>%
-      dplyr::select(platform, year, expedition, station, cast, deployment_latitude, deployment_longitude, max_depth, depth,
-                    temperature, conductivity, salinity, density, oxygen, oxygen2, oxygen3, upoly, soundSpeed, turbidity,
-                    pressure)
+      dplyr::select(platform, year, expedition, station, cast, deployment_latitude, deployment_longitude, max_depth, depth, depth_unit,
+                    temperature, temp_unit, conductivity, cond_unit,  salinity, sal_unit, density, den_unit, oxygen, oxy_unit, oxygen2, oxy2_unit, soundSpeed, sS_unit,
+                    turbidity, turb_unit, fluorescence, fluor_unit, upoly, upoly_unit, pressure)
 
   }
- return(SHIP_CTD_data)
+  return(SHIP_CTD_data)
 
 }
 
