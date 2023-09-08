@@ -43,6 +43,7 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
   soundSpeed <- ""
   turbidity <- ""
   fluorescence <- ""
+  nitrogen <- ""
   pressure <- ""
   flag <- ""
   expedition <- ""
@@ -66,6 +67,7 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
                               soundSpeed = numeric(),
                               turbidity = numeric(),
                               fluorescence = numeric(),
+                              nitrogen = numeric(),
                               pressure = numeric(),
                               flag = numeric(),
                               expedition = character(),
@@ -76,7 +78,6 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
                               deployment_latitude = numeric(),
                               max_depth = numeric(),
                               year = factor())
-
 
   for (i in expeditions) {
 
@@ -110,7 +111,7 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
 
     ## Loop through the list of CTD objects for a single expedition, extracting the data and key metadata, and compiling it all onto a single dataframe
 
-    ### Pull out EX1805 seperately bc it is missing so much metadata
+    ### Pull out EX1805 separately bc it is missing so much metadata
 
 
     if(i == "1805") {
@@ -151,9 +152,24 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
                         turb_unit = ifelse(length(as.character(tmp@metadata$units$turbidity$unit)) > 0, as.character(tmp@metadata$units$turbidity$unit),
                                            "Sensor not used"),
                         fluor_unit = ifelse(length(as.character(tmp@metadata$units$fluorescence$unit)) > 0, as.character(tmp@metadata$units$fluorescence$unit),
-                                            "Sensor not used"),
-                        upoly_unit = ifelse(length(as.character(tmp@metadata$units$upoly$unit)) > 0, as.character(tmp@metadata$units$upoly$unit),
+                                            NA_character_),
+                        upoly_unit = ifelse(is.na(upoly), "Sensor not used", "Units not found"),
+                        nit_unit = ifelse(length(as.character(tmp@metadata$units$nitrogenSaturation)) > 0, as.character(tmp@metadata$units$nitrogenSaturation$unit),
                                             "Sensor not used")) %>%
+
+          #Pull out all the sensors used to check for consistency across casts
+          dplyr::mutate(depth_sensor = tmp@metadata$dataNamesOriginal$depth,
+                        temp_sensor = tmp@metadata$dataNamesOriginal$temperature,
+                        cond_sensor = tmp@metadata$dataNamesOriginal$conductivity,
+                        sal_sensor = tmp@metadata$dataNamesOriginal$salinity,
+                        den_sensor = tmp@metadata$dataNamesOriginal$density,
+                        oxy_sensor = tmp@metadata$dataNamesOriginal$oxygen,
+                        oxy2_sensor = tmp@metadata$dataNamesOriginal$oxygen2,
+                        sS_sensor = tmp@metadata$dataNamesOriginal$soundSpeed,
+                        turb_sensor = tmp@metadata$dataNamesOriginal$turbidity,
+                        fluor_sensor = ifelse(is.na(fluor_unit), "Sensor not used", tmp@metadata$dataNamesOriginal$fluorescence),
+                        upoly_sensor = tmp@metadata$dataNamesOriginal$upoly,
+                        nit_sensor = tmp@metadata$dataNamesOriginal$nitrogenSaturation) %>%
           dplyr::select(-flag, -filename, -expedition_num, -date)
 
         dat2 <- dplyr::bind_rows(dat2, tmp2)
@@ -177,6 +193,7 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
                         max_depth = max(depth),
                         date = tmp@metadata$date,
                         year =  format(date, format = "%Y")) %>%
+
           #Pull out all the units for each sensor to check for consistency across casts
           dplyr::mutate(depth_unit = ifelse(length(as.character(tmp@metadata$units$depth$unit)) > 0, as.character(tmp@metadata$units$depth$unit),
                                             "Sensor not used"),
@@ -197,9 +214,25 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
                         turb_unit = ifelse(length(as.character(tmp@metadata$units$turbidity$unit)) > 0, as.character(tmp@metadata$units$turbidity$unit),
                                            "Sensor not used"),
                         fluor_unit = ifelse(length(as.character(tmp@metadata$units$fluorescence$unit)) > 0, as.character(tmp@metadata$units$fluorescence$unit),
-                                            "Sensor not used"),
-                        upoly_unit = ifelse(length(as.character(tmp@metadata$units$upoly$unit)) > 0, as.character(tmp@metadata$units$upoly$unit),
-                                            "Sensor not used")) %>%
+                                            NA_character_),
+                        upoly_unit = ifelse(is.na(upoly), "Sensor not used", ifelse(length(as.character(tmp@metadata$units$upoly$unit)) == 0,
+                                                                                    "Units not found", as.character(tmp@metadata$units$upoly$unit))),
+                        nit_unit = ifelse(length(as.character(tmp@metadata$units$nitrogenSaturation)) > 0, as.character(tmp@metadata$units$nitrogenSaturation$unit),
+                                          "Sensor not used")) %>%
+          #Pull out all the sensors used to check for consistency across casts
+          dplyr::mutate(depth_sensor = tmp@metadata$dataNamesOriginal$depth,
+                        temp_sensor = tmp@metadata$dataNamesOriginal$temperature,
+                        cond_sensor = tmp@metadata$dataNamesOriginal$conductivity,
+                        sal_sensor = tmp@metadata$dataNamesOriginal$salinity,
+                        den_sensor = tmp@metadata$dataNamesOriginal$density,
+                        oxy_sensor = tmp@metadata$dataNamesOriginal$oxygen,
+                        oxy2_sensor = tmp@metadata$dataNamesOriginal$oxygen2,
+                        sS_sensor = tmp@metadata$dataNamesOriginal$soundSpeed,
+                        turb_sensor = tmp@metadata$dataNamesOriginal$turbidity,
+                        fluor_sensor = ifelse(is.na(fluor_unit), "Sensor not used", tmp@metadata$dataNamesOriginal$fluorescence),
+                        upoly_sensor = tmp@metadata$dataNamesOriginal$upoly,
+                        nit_sensor = tmp@metadata$dataNamesOriginal$nitrogenSaturation) %>%
+
           dplyr::select(-flag, -filename, -expedition_num, -date)
 
         dat2 <- dplyr::bind_rows(dat2, tmp2)
@@ -211,9 +244,10 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
     # Compile the CTD data from each expedition into a single dataframe
 
     SHIP_CTD_data <- dplyr::bind_rows(SHIP_CTD_data, dat2) %>%
-      dplyr::select(platform, year, expedition, station, cast, deployment_latitude, deployment_longitude, max_depth, depth, depth_unit,
-                    temperature, temp_unit, conductivity, cond_unit,  salinity, sal_unit, density, den_unit, oxygen, oxy_unit, oxygen2, oxy2_unit, soundSpeed, sS_unit,
-                    turbidity, turb_unit, fluorescence, fluor_unit, upoly, upoly_unit, pressure)
+      dplyr::select(platform, year, expedition, station, cast, deployment_latitude, deployment_longitude, max_depth, depth, depth_sensor, depth_unit,
+                    temperature, temp_sensor,  temp_unit, conductivity, cond_sensor, cond_unit,  salinity, sal_sensor, sal_unit, density, den_sensor, den_unit,
+                    oxygen, oxy_sensor, oxy_unit, oxygen2, oxy2_sensor, oxy2_unit, soundSpeed, sS_sensor, sS_unit,
+                    turbidity, turb_sensor, turb_unit, fluorescence, fluor_sensor, fluor_unit, upoly, upoly_sensor, upoly_unit, nitrogenSaturation, nit_sensor, nit_unit,  pressure)
 
   }
   return(SHIP_CTD_data)

@@ -1,7 +1,7 @@
 Package: NOAA.Explore.QAQC
 Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
-Authors@R:c(person("Sarah", "Groves", email = "sarah.groves@noaa.gov", role = c("cre", "aut")),
+Version: 0.0.1
+Authors@R: c(person("Sarah", "Groves", email = "sarah.groves@noaa.gov", role = c("cre", "aut")),
             person("Katharine", "Egan", email = "katharine.egan@noaa.gov", role = c("ctb", "aut")))
 Description: Compiles and QAQC's biological and physical data collected by NOAA Ocean Exploration and R/V Okeanos Explorer.
 License: MIT + file LICENSE
@@ -10,3 +10,6 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 URL: https://github.com/shgroves/NOAA.Explore.QAQC
 BugReports: https://github.com/shgroves/NOAA.Explore.QAQC/issues
+Depends: 
+    R (>= 2.10)
+LazyData: true
