@@ -163,9 +163,9 @@ ASPIRE_SHIP_CTD_data <- compile_SHIP_CTD(expeditions = expeditions,
   dplyr::mutate(campaign = campaign)
 
 # Export to a csv file for further QAQC
-write.csv(ASPIRE_SHIP_CTD_data, "C:/Users/sarah.groves/Documents/Data/CTD/DRAFT_ASPIRE_SHIP_CTD_data.csv", row.names = F)
+#write.csv(ASPIRE_SHIP_CTD_data, "C:/Users/sarah.groves/Documents/Data/CTD/DRAFT_ASPIRE_SHIP_CTD_data.csv", row.names = F)
 
-usethis::use_data(ASPIRE_SHIP_CTD_data, overwrite = T)
+#usethis::use_data(ASPIRE_SHIP_CTD_data, overwrite = T)
 
 ```
 
@@ -387,126 +387,126 @@ expeditions <- c(
 )
 
 
-  for(i in expeditions){
+for(i in expeditions){
+  
+  # filter by expedition 
+  cruise <- ASPIRE_SHIP_CTD_data %>% dplyr::filter(expedition == i)
+  
+  cast <- unique(cruise$cast)
+  #j <- "ctd001"
+  for (j in cast) {
     
-    # filter by expedition 
-    cruise <- ASPIRE_SHIP_CTD_data %>% dplyr::filter(expedition == i)
+    ctd_rosette_data <- cruise %>% dplyr::filter(cast == j)
     
-    cast <- unique(cruise$cast)
-    #j <- "ctd001"
-    for (j in cast) {
-      
-      ctd_rosette_data <- cruise %>% dplyr::filter(cast == j)
-      
-      
-      temp <- ggplot(ctd_rosette_data, aes(x = temperature, y = depth)) +
-        geom_path(color = "#003087", linewidth = 1.5) +
-        labs(x = "Temperature (°C)", y = "Depth (m)") +
-        scale_y_reverse() +
-        scale_x_continuous(position = "top",
-                           breaks = c(5, 10, 15, 20, 25, 30)) +
-        theme_bw() +
-        theme_SHIP_CTD() +
-        ggtitle(paste(i, j, sep = " "))
-      
-      
-      cond <-  ggplot(ctd_rosette_data, aes(x = conductivity, y = depth)) +
-        geom_path(colour = "#003087") +
-        labs(x = "Conductivity (S/m)", y = "") +
-        scale_y_reverse() +
-        scale_x_continuous(position = "top") + 
-        theme_bw() +
-        theme_SHIP_CTD() 
-      
-      
-      sal <- ggplot(ctd_rosette_data, aes(x = salinity, y = depth)) +
-        geom_path(colour = "#003087", linewidth = 1.5) +
-        labs(x = "Salinity (PSU)", y = "") +
-        scale_y_reverse() +
-        scale_x_continuous(position = "top") + 
-        theme_bw() +
-        theme_SHIP_CTD() 
-      
-      
-      den <- ggplot(ctd_rosette_data, aes(x = density, y = depth)) +
-        geom_path(colour = "black") +
-        labs(x = bquote('Density (kg/'~m^3~')'),
-             y = "") +
-        scale_y_reverse() +
-        scale_x_continuous(position = "top") + 
-        theme_bw() +
-        theme_SHIP_CTD() 
-      
-      
-      oxy1 <- ggplot(ctd_rosette_data, aes(x = oxygen, y = depth)) +
-        geom_path(colour = "#003087", linewidth = 1.5) +
-        labs(x = "Oxygen (%)", y = "Depth (m)") +
-        scale_y_reverse() +
-        scale_x_continuous(position = "top") + 
-        theme_bw() +
-        theme_SHIP_CTD() 
-      
-      
-      oxy2 <- ggplot(ctd_rosette_data, aes(x = oxygen2, y = depth)) +
-        geom_path(colour = "#003087", linewidth = 1.5) +
-        labs(x = "Oxygen (mg/L)", y = "") +
-        scale_y_reverse() +
-        scale_x_continuous(position = "top") + 
-        theme_bw() +
-        theme_SHIP_CTD() 
-      
-      
-      oxy_pot <- ggplot(ctd_rosette_data, aes(x = upoly, y = depth)) +
-        geom_path(colour = "black") +
-        labs(x = "Oxygen redux (mV)", y = "") +
-        scale_y_reverse() +
-        scale_x_continuous(position = "top") + 
-        theme_bw() +
-        theme_SHIP_CTD() 
-      
-      
-      turb <- ggplot(ctd_rosette_data, aes(x = turbidity, y = depth)) +
-        geom_path(colour = "black") +
-        labs(x = "Turbidity (NTU)", y = "") +
-        scale_y_reverse() +
-        scale_x_continuous(position = "top") + 
-        theme_bw() +
-        theme_SHIP_CTD() 
-      
-      
-      fluor <- ggplot(ctd_rosette_data, aes(x = fluorescence, y = depth)) +
-        geom_path(colour = "black") +
-        labs(x = bquote('Fluorescence (mg/'~m^3~')'), y = "Depth (m)") +
-        scale_y_reverse() +
-        scale_x_continuous(position = "top") + 
-        theme_bw() +
-        theme_SHIP_CTD() 
-      
-      ss <- ggplot(ctd_rosette_data, aes(x = soundSpeed, y = depth)) +
-        geom_path(colour = "black") +
-        labs(x = "Sound speed (m/s)", y = "") +
-        scale_y_reverse() +
-        scale_x_continuous(position = "top") + 
-        theme_bw() +
-        theme_SHIP_CTD() 
-      
-      
-      nit <- ggplot(ctd_rosette_data, aes(x = nitrogenSaturation, y = depth)) +
-        geom_path(colour = "black") +
-        labs(x = "Nitrogen (mg/L)", y = "") +
-        scale_y_reverse() +
-        scale_x_continuous(position = "top") + 
-        theme_bw() +
-        theme_SHIP_CTD() 
-      
-       plot <- ggarrange(temp, cond, sal, den, oxy1, oxy2, nit, oxy_pot, fluor, turb, ss, ncol = 4, nrow = 3)
-       
-       print(plot)
-      
-    }
+    
+    temp <- ggplot(ctd_rosette_data, aes(x = temperature, y = depth)) +
+      geom_path(color = "#003087", linewidth = 1.5) +
+      labs(x = "Temperature (°C)", y = "Depth (m)") +
+      scale_y_reverse() +
+      scale_x_continuous(position = "top",
+                         breaks = c(5, 10, 15, 20, 25, 30)) +
+      theme_bw() +
+      theme_SHIP_CTD() +
+      ggtitle(paste(i, j, sep = " "))
+    
+    
+    cond <-  ggplot(ctd_rosette_data, aes(x = conductivity, y = depth)) +
+      geom_path(colour = "#003087") +
+      labs(x = "Conductivity (S/m)", y = "") +
+      scale_y_reverse() +
+      scale_x_continuous(position = "top") + 
+      theme_bw() +
+      theme_SHIP_CTD() 
+    
+    
+    sal <- ggplot(ctd_rosette_data, aes(x = salinity, y = depth)) +
+      geom_path(colour = "#003087", linewidth = 1.5) +
+      labs(x = "Salinity (PSU)", y = "") +
+      scale_y_reverse() +
+      scale_x_continuous(position = "top") + 
+      theme_bw() +
+      theme_SHIP_CTD() 
+    
+    
+    den <- ggplot(ctd_rosette_data, aes(x = density, y = depth)) +
+      geom_path(colour = "black") +
+      labs(x = bquote('Density (kg/'~m^3~')'),
+           y = "") +
+      scale_y_reverse() +
+      scale_x_continuous(position = "top") + 
+      theme_bw() +
+      theme_SHIP_CTD() 
+    
+    
+    oxy1 <- ggplot(ctd_rosette_data, aes(x = oxygen, y = depth)) +
+      geom_path(colour = "#003087", linewidth = 1.5) +
+      labs(x = "Oxygen (%)", y = "Depth (m)") +
+      scale_y_reverse() +
+      scale_x_continuous(position = "top") + 
+      theme_bw() +
+      theme_SHIP_CTD() 
+    
+    
+    oxy2 <- ggplot(ctd_rosette_data, aes(x = oxygen2, y = depth)) +
+      geom_path(colour = "#003087", linewidth = 1.5) +
+      labs(x = "Oxygen (mg/L)", y = "") +
+      scale_y_reverse() +
+      scale_x_continuous(position = "top") + 
+      theme_bw() +
+      theme_SHIP_CTD() 
+    
+    
+    oxy_pot <- ggplot(ctd_rosette_data, aes(x = upoly, y = depth)) +
+      geom_path(colour = "black") +
+      labs(x = "Oxygen redux (mV)", y = "") +
+      scale_y_reverse() +
+      scale_x_continuous(position = "top") + 
+      theme_bw() +
+      theme_SHIP_CTD() 
+    
+    
+    turb <- ggplot(ctd_rosette_data, aes(x = turbidity, y = depth)) +
+      geom_path(colour = "black") +
+      labs(x = "Turbidity (NTU)", y = "") +
+      scale_y_reverse() +
+      scale_x_continuous(position = "top") + 
+      theme_bw() +
+      theme_SHIP_CTD() 
+    
+    
+    fluor <- ggplot(ctd_rosette_data, aes(x = fluorescence, y = depth)) +
+      geom_path(colour = "black") +
+      labs(x = bquote('Fluorescence (mg/'~m^3~')'), y = "Depth (m)") +
+      scale_y_reverse() +
+      scale_x_continuous(position = "top") + 
+      theme_bw() +
+      theme_SHIP_CTD() 
+    
+    ss <- ggplot(ctd_rosette_data, aes(x = soundSpeed, y = depth)) +
+      geom_path(colour = "black") +
+      labs(x = "Sound speed (m/s)", y = "") +
+      scale_y_reverse() +
+      scale_x_continuous(position = "top") + 
+      theme_bw() +
+      theme_SHIP_CTD() 
+    
+    
+    nit <- ggplot(ctd_rosette_data, aes(x = nitrogenSaturation, y = depth)) +
+      geom_path(colour = "black") +
+      labs(x = "Nitrogen (mg/L)", y = "") +
+      scale_y_reverse() +
+      scale_x_continuous(position = "top") + 
+      theme_bw() +
+      theme_SHIP_CTD() 
+    
+    plot <- ggarrange(temp, cond, sal, den, oxy1, oxy2, nit, oxy_pot, fluor, turb, ss, ncol = 4, nrow = 3)
+    
+    print(plot)
     
   }
   
+}
+
 ```
 
 
@@ -550,252 +550,263 @@ make_sensor_profiles <- function(sensor) {
       
       if(sensor == "temperature") {
         
-        print(
-          ggplot(ctd_rosette_data, aes(x = temperature, y = depth)) +
-            geom_path(color = "#003087", linewidth = 1.5) +
-            labs(x = "Temperature (°C)", y = "Depth (m)") +
-            scale_y_reverse() +
-            scale_x_continuous(position = "top",
-                               breaks = c(5, 10, 15, 20, 25, 30)) +
-            theme_bw() +
-            theme_SHIP_CTD() +
-            ggtitle(paste(i, j, sep = " "))
+        
+        NOAA <- get_NOAA_WOA_data(var = "temperature",
+                                  spat_res = 1,
+                                  av_period = annual,
+                                  cache = T)
+        
+        plot_NOAA <- function(NOAA, expedition = i, cast = j, epsg = NULL) 
           
-        )
+          print(
+            ggplot() +
+              geom_path(data =ctd_rosette_data, aes(x = temperature, y = depth),color = "black", linewidth = 1.5) +
+              geom_path(data =WOA_dat, aes(x = t_an, y = depth), color = "red", linewidth = 1.5) +
+              labs(x = "Temperature (°C)", y = "Depth (m)") +
+              scale_y_reverse() +
+              scale_x_continuous(position = "top",
+                                 breaks = c(5, 10, 15, 20, 25, 30)) +
+              theme_bw()
+            
+          )
+          
+        }
+        
+        
+        if(sensor == "conductivity"){
+          print(
+            ggplot(ctd_rosette_data, aes(x = conductivity, y = depth)) +
+              geom_path(colour = "#003087") +
+              labs(x = "Conductivity (S/m)", y = "Depth (m)") +
+              scale_y_reverse() +
+              scale_x_continuous(position = "top") + 
+              theme_bw() +
+              theme_SHIP_CTD() +
+              ggtitle(paste(i, j, sep = " "))
+          )
+        }
+        
+        if(sensor == "salinity"){
+          print(
+            ggplot(ctd_rosette_data, aes(x = salinity, y = depth)) +
+              geom_path(colour = "#003087", linewidth = 1.5) +
+              labs(x = "Salinity (PSU)", y = "Depth (m)") +
+              scale_y_reverse() +
+              scale_x_continuous(position = "top") + 
+              theme_bw() +
+              theme_SHIP_CTD() +
+              ggtitle(paste(i, j, sep = " "))
+          )
+        }
+        
+        if(sensor == "density"){
+          print(
+            ggplot(ctd_rosette_data, aes(x = density, y = depth)) +
+              geom_path(colour = "black") +
+              labs(x = bquote('Density (kg/'~m^3~')'),
+                   y = "Depth (m)") +
+              scale_y_reverse() +
+              scale_x_continuous(position = "top") + 
+              theme_bw() +
+              theme_SHIP_CTD() +
+              ggtitle(paste(i, j, sep = " "))
+          )
+        }
+        
+        if(sensor == "oxygen1"){
+          print(
+            ggplot(ctd_rosette_data, aes(x = oxygen, y = depth)) +
+              geom_path(colour = "#003087", linewidth = 1.5) +
+              labs(x = "Oxygen (%)", y = "Depth (m)") +
+              scale_y_reverse() +
+              scale_x_continuous(position = "top") + 
+              theme_bw() +
+              theme_SHIP_CTD() +
+              ggtitle(paste(i, j, sep = " "))
+          )
+        }
+        
+        
+        if(sensor == "oxygen2"){
+          print(
+            ggplot(ctd_rosette_data, aes(x = oxygen2, y = depth)) +
+              geom_path(colour = "#003087", linewidth = 1.5) +
+              labs(x = "Oxygen (mg/L)", y = "Depth (m)") +
+              scale_y_reverse() +
+              scale_x_continuous(position = "top") + 
+              theme_bw() +
+              theme_SHIP_CTD() +
+              ggtitle(paste(i, j, sep = " "))
+          )
+        }
+        
+        
+        if(sensor == "o2 potential"){
+          print(
+            ggplot(ctd_rosette_data, aes(x = upoly, y = depth)) +
+              geom_path(colour = "black") +
+              labs(x = "Oxygen reduction potential", y = "Depth (m)") +
+              scale_y_reverse() +
+              scale_x_continuous(position = "top") + 
+              theme_bw() +
+              theme_SHIP_CTD() +
+              ggtitle(paste(i, j, sep = " "))
+          )
+        }
+        
+        if(sensor == "turbidity"){
+          print(
+            ggplot(ctd_rosette_data, aes(x = turbidity, y = depth)) +
+              geom_path(colour = "black") +
+              labs(x = "Turbidity (NTU)", y = "Depth (m)") +
+              scale_y_reverse() +
+              scale_x_continuous(position = "top") + 
+              theme_bw() +
+              theme_SHIP_CTD() +
+              ggtitle(paste(i, j, sep = " "))
+          )
+        }
+        if(sensor == "fluorescence"){
+          print(
+            ggplot(ctd_rosette_data, aes(x = fluorescence, y = depth)) +
+              geom_path(colour = "black") +
+              labs(x = "Fluorescence", y = "Depth (m)") +
+              scale_y_reverse() +
+              scale_x_continuous(position = "top") + 
+              theme_bw() +
+              theme_SHIP_CTD() +
+              ggtitle(paste(i, j, sep = " "))
+          )
+        }
+        
+        
+        if(sensor == "sound speed"){
+          print(
+            ggplot(ctd_rosette_data, aes(x = soundSpeed, y = depth)) +
+              geom_path(colour = "black") +
+              labs(x = "Sound speed (m/s)", y = "Depth (m)") +
+              scale_y_reverse() +
+              scale_x_continuous(position = "top") + 
+              theme_bw() +
+              theme_SHIP_CTD() +
+              ggtitle(paste(i, j, sep = " "))
+          )
+        }
+        
+        if(sensor == "nitrogen"){
+          print(
+            ggplot(ctd_rosette_data, aes(x = nitrogenSaturation, y = depth)) +
+              geom_path(colour = "black") +
+              labs(x = "Nitrogen (mg/L)", y = "Depth (m)") +
+              scale_y_reverse() +
+              scale_x_continuous(position = "top") + 
+              theme_bw() +
+              theme_SHIP_CTD() +
+              ggtitle(paste(i, j, sep = " "))
+          )
+        }
+        
+        
+        #print(ggarrange(temp, cond, sal, dens, oxygen, up, ncol = 3, nrow = 2))
+        
         
       }
       
-      
-      if(sensor == "conductivity"){
-        print(
-          ggplot(ctd_rosette_data, aes(x = conductivity, y = depth)) +
-            geom_path(colour = "#003087") +
-            labs(x = "Conductivity (S/m)", y = "Depth (m)") +
-            scale_y_reverse() +
-            scale_x_continuous(position = "top") + 
-            theme_bw() +
-            theme_SHIP_CTD() +
-            ggtitle(paste(i, j, sep = " "))
-        )
-      }
-      
-      if(sensor == "salinity"){
-        print(
-          ggplot(ctd_rosette_data, aes(x = salinity, y = depth)) +
-            geom_path(colour = "#003087", linewidth = 1.5) +
-            labs(x = "Salinity (PSU)", y = "Depth (m)") +
-            scale_y_reverse() +
-            scale_x_continuous(position = "top") + 
-            theme_bw() +
-            theme_SHIP_CTD() +
-            ggtitle(paste(i, j, sep = " "))
-        )
-      }
-      
-      if(sensor == "density"){
-        print(
-          ggplot(ctd_rosette_data, aes(x = density, y = depth)) +
-            geom_path(colour = "black") +
-            labs(x = bquote('Density (kg/'~m^3~')'),
-                 y = "Depth (m)") +
-            scale_y_reverse() +
-            scale_x_continuous(position = "top") + 
-            theme_bw() +
-            theme_SHIP_CTD() +
-            ggtitle(paste(i, j, sep = " "))
-        )
-      }
-      
-      if(sensor == "oxygen1"){
-        print(
-          ggplot(ctd_rosette_data, aes(x = oxygen, y = depth)) +
-            geom_path(colour = "#003087", linewidth = 1.5) +
-            labs(x = "Oxygen (%)", y = "Depth (m)") +
-            scale_y_reverse() +
-            scale_x_continuous(position = "top") + 
-            theme_bw() +
-            theme_SHIP_CTD() +
-            ggtitle(paste(i, j, sep = " "))
-        )
-      }
-      
-      
-      if(sensor == "oxygen2"){
-        print(
-          ggplot(ctd_rosette_data, aes(x = oxygen2, y = depth)) +
-            geom_path(colour = "#003087", linewidth = 1.5) +
-            labs(x = "Oxygen (mg/L)", y = "Depth (m)") +
-            scale_y_reverse() +
-            scale_x_continuous(position = "top") + 
-            theme_bw() +
-            theme_SHIP_CTD() +
-            ggtitle(paste(i, j, sep = " "))
-        )
-      }
-      
-      
-      if(sensor == "o2 potential"){
-        print(
-          ggplot(ctd_rosette_data, aes(x = upoly, y = depth)) +
-            geom_path(colour = "black") +
-            labs(x = "Oxygen reduction potential", y = "Depth (m)") +
-            scale_y_reverse() +
-            scale_x_continuous(position = "top") + 
-            theme_bw() +
-            theme_SHIP_CTD() +
-            ggtitle(paste(i, j, sep = " "))
-        )
-      }
-      
-      if(sensor == "turbidity"){
-        print(
-          ggplot(ctd_rosette_data, aes(x = turbidity, y = depth)) +
-            geom_path(colour = "black") +
-            labs(x = "Turbidity (NTU)", y = "Depth (m)") +
-            scale_y_reverse() +
-            scale_x_continuous(position = "top") + 
-            theme_bw() +
-            theme_SHIP_CTD() +
-            ggtitle(paste(i, j, sep = " "))
-        )
-      }
-      if(sensor == "fluorescence"){
-        print(
-          ggplot(ctd_rosette_data, aes(x = fluorescence, y = depth)) +
-            geom_path(colour = "black") +
-            labs(x = "Fluorescence", y = "Depth (m)") +
-            scale_y_reverse() +
-            scale_x_continuous(position = "top") + 
-            theme_bw() +
-            theme_SHIP_CTD() +
-            ggtitle(paste(i, j, sep = " "))
-        )
-      }
-      
-      
-      if(sensor == "sound speed"){
-        print(
-          ggplot(ctd_rosette_data, aes(x = soundSpeed, y = depth)) +
-            geom_path(colour = "black") +
-            labs(x = "Sound speed (m/s)", y = "Depth (m)") +
-            scale_y_reverse() +
-            scale_x_continuous(position = "top") + 
-            theme_bw() +
-            theme_SHIP_CTD() +
-            ggtitle(paste(i, j, sep = " "))
-        )
-      }
-      
-      if(sensor == "nitrogen"){
-        print(
-          ggplot(ctd_rosette_data, aes(x = nitrogenSaturation, y = depth)) +
-            geom_path(colour = "black") +
-            labs(x = "Nitrogen (mg/L)", y = "Depth (m)") +
-            scale_y_reverse() +
-            scale_x_continuous(position = "top") + 
-            theme_bw() +
-            theme_SHIP_CTD() +
-            ggtitle(paste(i, j, sep = " "))
-        )
-      }
-      
-      
-      #print(ggarrange(temp, cond, sal, dens, oxygen, up, ncol = 3, nrow = 2))
-      
-      
     }
-    
   }
-}
-```
-
-```{r}
-
-# Create base range plots for temperature, phosphate, nitrate, silicate, oxygen, salinity, density
-
-```
-
-#### Temperature
-```{r}
-
-make_sensor_profiles(sensor="temperature")
-
-
-
-```
-
-
-#### Conductivity
-```{r}
-
-make_sensor_profiles(sensor="conductivity")
-
-```
-
-
-#### Salinity
-```{r}
-
-make_sensor_profiles(sensor="salinity")
-
-```
-
-
-#### Density
-```{r}
-
-make_sensor_profiles(sensor="density")
-
-```
-
-
-#### Oxygen (%)
-```{r}
-
-make_sensor_profiles(sensor="oxygen1")
-
-```
-
-
-#### Oxygen (mg/L)
-```{r}
-
-make_sensor_profiles(sensor="oxygen2")
-
-```
-
-#### Oxygen reduction potential
-```{r}
-
-make_sensor_profiles(sensor="o2 potential")
-
-```
-
-#### Turbidity
-```{r}
-
-make_sensor_profiles(sensor="turbidity")
-
-```
-
-#### Fluorescence
-```{r}
-
-make_sensor_profiles(sensor="fluorescence")
-
-```
-
-#### Sound speed
-```{r}
-
-make_sensor_profiles(sensor="sound speed")
-
-```
-
-#### Nitrogen
-```{r}
-
-make_sensor_profiles(sensor="nitrogen")
-
-```
-
+  ```
+  
+  
+  
+  
+  ```{r}
+  
+  # Create base range plots for temperature, phosphate, nitrate, silicate, oxygen, salinity, density
+  
+  ```
+  
+  #### Temperature
+  ```{r}
+  
+  make_sensor_profiles(sensor="temperature")
+  
+  
+  
+  ```
+  
+  
+  #### Conductivity
+  ```{r}
+  
+  make_sensor_profiles(sensor="conductivity")
+  
+  ```
+  
+  
+  #### Salinity
+  ```{r}
+  
+  make_sensor_profiles(sensor="salinity")
+  
+  ```
+  
+  
+  #### Density
+  ```{r}
+  
+  make_sensor_profiles(sensor="density")
+  
+  ```
+  
+  
+  #### Oxygen (%)
+  ```{r}
+  
+  make_sensor_profiles(sensor="oxygen1")
+  
+  ```
+  
+  
+  #### Oxygen (mg/L)
+  ```{r}
+  
+  make_sensor_profiles(sensor="oxygen2")
+  
+  ```
+  
+  #### Oxygen reduction potential
+  ```{r}
+  
+  make_sensor_profiles(sensor="o2 potential")
+  
+  ```
+  
+  #### Turbidity
+  ```{r}
+  
+  make_sensor_profiles(sensor="turbidity")
+  
+  ```
+  
+  #### Fluorescence
+  ```{r}
+  
+  make_sensor_profiles(sensor="fluorescence")
+  
+  ```
+  
+  #### Sound speed
+  ```{r}
+  
+  make_sensor_profiles(sensor="sound speed")
+  
+  ```
+  
+  #### Nitrogen
+  ```{r}
+  
+  make_sensor_profiles(sensor="nitrogen")
+  
+  ```
+  
+  

@@ -17,13 +17,11 @@
 #'
 #' @param NOAA Dataset of the NOAA World Ocean Atlas
 #'  (with [get_NOAA()]).
-#' @param depth Depth in meters.
 #' @param points Add locations of extracted point geometry ([`sf`][sf::st_sf()]
 #'  object).
 #' @param epsg The epsg used to project the data (currently supported `4326`,
 #'  `3031`and `3995`).
-#' @param rng A vector of two numeric values for the range of the oceanographic
-#'  variable.
+#' @param expedition the ASPIRE campaign expedition (must be '"1805"', '"1810"','"1812"', '"1903l1"','"1905l1"', '"1906"','"2101"','"2102"','"2107"')
 #'
 #' @return [ggplot2::ggplot()]
 #'
@@ -46,80 +44,145 @@
 #'
 #' }
 
-plot_NOAA <- function(NOAA, depth = 0, points = NULL, epsg = NULL, rng = NULL) {
+plot_NOAA <- function(NOAA, expedition, cast, epsg = NULL) {
 
-  points <- ASPIRE_SHIP_CTD_data %>%
-    dplyr::filter(expedition == "EX2101") %>%
-    dplyr::filter(cast == "ctd004")
-  # epsg_check
-    # epsg <- epsg_check(NOAA, epsg)
-    # if (epsg == "original")
-    epsg <- sf::st_crs(NOAA)
+  library(ggplot2)
 
-    # get total range of environmental parameter in order to fix color scale over
-    # different depth slices
-    if (is.null(rng)) {
-      rng <- range(NOAA[[1]], na.rm = TRUE)
+  # Create a dataset of the expedition, cast, variable of interest and values
+
+  CTD <- NOAA.Explore.QAQC::ASPIRE_SHIP_CTD_data |>
+    dplyr::select(expedition, cast, deployment_longitude, deployment_latitude, depth, temperature) |> # Later turn temperature to a variable
+    dplyr::filter(expedition == expedition) |>
+    dplyr::filter(cast == cast)
+
+  # Create variables to add to the WOA dataset
+
+  cast <- unique(CTD$cast)
+  expedition <- unique(CTD$expedition)
+
+  # Create a dataframe of just the points of interest for a
+  xy <- NOAA.Explore.QAQC::ASPIRE_SHIP_CTD_data |>
+    dplyr::select(expedition, cast, deployment_longitude, deployment_latitude) |>
+    dplyr::filter(expedition == expedition) |>
+    dplyr::filter(cast == cast) |>
+    # For now, just take the mean of the two points, update later
+    dplyr::summarise(lat_degrees = mean(deployment_latitude),
+                     lon_degrees = mean(deployment_longitude), .groups = c("expedition", "cast"))
+
+  # specify coordinates
+  sp::coordinates(xy) <- ~lon_degrees+lat_degrees
+
+  # Get data from WOA
+  #NOAA <- get_NOAA_WOA_data("temperature", 1, "annual", cache = T)
+
+  # check the projection for the NOAA object
+  epsg <- epsg_check(NOAA, epsg)
+  if (epsg == "original") epsg <- sf::st_crs(NOAA)
+  #print(epsg$input)
+
+  # Give the lat and lon of the xy object the same projection as the NOAA object
+  sp::proj4string(xy) <- sp::CRS("+init=epsg:4326")
+
+  # Extract all the data available at point xy - it may take a minute
+
+  WOA_dat <- as.data.frame(stars::st_extract(NOAA, sf::st_as_sf(xy))) |>
+    # Add in meta data
+    dplyr::mutate(cast = cast,
+                  expedition = expedition,
+                  #depth_WOA = depth,
+                  WOA_lat = xy@bbox[2],
+                  WOA_lon = xy@bbox[1]) |>
+    # filter out depths with no values
+    dplyr::filter(!is.na(t_an)) |>
+    # Remove columns
+    dplyr::select(-geometry)
+
+  return(WOA_dat)
+
+
+  # # Plot the CTD and WOA data together
+  # ggplot() +
+  #   geom_path(data =CTD, aes(x = temperature, y = depth),color = "black", linewidth = 1.5) +
+  #   geom_path(data =WOA_dat, aes(x = t_an, y = depth), color = "red", linewidth = 1.5) +
+  #   labs(x = "Temperature (°C)", y = "Depth (m)") +
+  #   scale_y_reverse() +
+  #   scale_x_continuous(position = "top",
+  #                      breaks = c(5, 10, 15, 20, 25, 30)) +
+  #   theme_bw()
+  #
+  # Figure out mapping stuff later - write a custom app with a shapefile
+
+  # RegHR <- maps::map("worldHires", namesonly=TRUE, plot=FALSE)
+  #
+  #
+  # basemap <-  maps::map.where('worldHires', x=-77.25374, y= 30.15007)
+  #
+  # ggmap::ggmap(basemap)
+  #
+  # map('usa', fill=TRUE, col="#00A600",  bg="#CCEEFF", ylim=c(-35,65), wrap=c(-25,335),
+  #     region=RegHR[-grep("Antarctica", RegHR)])
+  #
+  # lats<-c(25,35)
+  # lons<-c(-83,-77)
+  # bb<-ggmap::make_bbox(lon=lons,lat=lats,f=0.05)
+  # cda<-ggmap::get_map(bb,zoom=3,maptype="terrain")
+  # ggmap::ggmap(cda)+xlim(lons)+ylim(lats)+theme_bw()+labs(x="Longitude",y="Latitude")
+}
+
+reproject <- function(obj, epsg, ...) {
+
+  # check if epsg is different of original
+  epsg <- epsg_check(obj, epsg)
+  # epsg NULL, "", or "original" then use crs of supplied object
+  if (epsg == "original") {
+    return(obj)
+  }
+
+  UseMethod("reproject")
+}
+
+epsg_check <- function(obj, epsg) {
+
+  # correct format and same as original
+  if (is.null(epsg) || epsg == "original" || epsg == character(1)) {
+    # return early
+    "original"
+  } else if (inherits(epsg, "crs")) {
+    # return early
+    if (epsg == sf::st_crs(obj)) {
+      "original"
+    } else {
+      epsg
     }
+  } else if (is.character(epsg) & grepl("^[[:digit:]]+$", epsg)) {
+    # recast to numeric
+    epsg <- as.numeric(epsg)
+    # try if crs exist
+    tryCatch(
+      sf::st_crs(epsg),
+      warning = function(cnd) {
+        stop("Unknown format supplied to epsg.", call. = FALSE)
+      }
+    )
 
-    # filter a specific depth to obtain a 2D representation
-    if (!is.null(depth)) {
-      NOAA <- filter_NOAA(NOAA, depth = max(depth), epsg = epsg)
+    if (sf::st_crs(epsg)  == sf::st_crs(obj)) {
+      "original"
+    } else {
+      epsg
     }
-
-    # get species / parameter names
-    var <- substr(attributes(NOAA)$names, 1, 1)
-
-    # defaults
-    lim_method <- "cross"
-
-    # world map
-    wmap <- maps::map("world", wrap = c(-180, 180), plot = FALSE, fill = TRUE) |>
-      sf::st_as_sf()
-
-    # coord transform NOAA, wmap and selected points if different from origin
-    NOAA <- reproject(NOAA, epsg)
-    wmap <- reproject(wmap, epsg)
-    if (!is.null(points)) points <- reproject(points, epsg)
-
-    # base plot
-    base <- ggplot2::ggplot() +
-      stars::geom_stars(data = NOAA) +
-      ggplot2::geom_sf(data = wmap, fill = "grey")
-
-    if (!is.null(points)) {
-      base <- base +
-        ggplot2::geom_sf(data = points)
+  } else if (is.numeric(epsg)) {
+    # try if crs exist
+    tryCatch(
+      sf::st_crs(epsg),
+      warning = function(cnd) {
+        stop("Unknown format supplied to epsg.", call. = FALSE)
+      }
+    )
+    if (sf::st_crs(epsg) == sf::st_crs(obj)) {
+      "original"
+    } else {
+      epsg
     }
-
-    if (epsg == 3031 | epsg == 3995 | epsg == sf::st_crs(3031) |
-        epsg == sf::st_crs(3995)) {
-      lim_method <- "geometry_bbox"
-    }
-
-    base +
-      ggplot2::coord_sf(
-        lims_method = lim_method,
-        default_crs = epsg,
-        crs = epsg,
-        expand = FALSE
-      ) +
-      ggplot2::scale_fill_viridis_c(
-        env_parm_labeller(var),
-        limits = rng,
-        na.value = "transparent"
-      ) +
-      ggplot2::labs(x = NULL, y = NULL) +
-      ggplot2::theme(
-        panel.grid.major = ggplot2::element_line(
-          color = grDevices::gray(.25),
-          linetype = 'dashed',
-          size = 0.5
-        ),
-        panel.ontop = TRUE,
-        axis.line = ggplot2::element_blank(),
-        axis.title = ggplot2::element_blank(),
-        panel.background = ggplot2::element_rect(fill = NA)
-      )
   }
 }
+
