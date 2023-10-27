@@ -6,10 +6,7 @@ output:
   rmdformats::material:
     fig_caption: true
     highlight: "kate"
-    
 ---
-
-
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, comment=FALSE, results='hide'}
 
@@ -29,11 +26,11 @@ library(ggpubr)
 # Source functions for now
 
 source("C:/Users/sarah.groves/Documents/R_packages/NOAA.Explore.QAQC/R/download_SHIP_CTD_data.R")
-source("C:/Users/sarah.groves/Documents/R_packages/NOAA.Explore.QAQC/R/count_SHIP_CTD_files.R")
+#source("C:/Users/sarah.groves/Documents/R_packages/NOAA.Explore.QAQC/R/count_SHIP_CTD_files.R")
 source("C:/Users/sarah.groves/Documents/R_packages/NOAA.Explore.QAQC/R/theme_SHIP_CTD.R")
+#source("C:/Users/sarah.groves/Documents/R_packages/NOAA.Explore.QAQC/R/extract_NOAA_WOA.R")
+#source("C:/Users/sarah.groves/Documents/R_packages/NOAA.Explore.QAQC/R/get_NOAA_WOA_data.R")
 ```
-
-
 
 ```{r}
 
@@ -72,17 +69,16 @@ expeditions <- c("1805", "1810", "1812", "1903l1", "1905l1", "1906", "2101", "21
 knitr::include_graphics("C:/Users/sarah.groves/Documents/ocean-exploration-logo-360.png")
 ```
 
-Introduction
----------------
+1## Introduction
 
-**The purpose of this document is to consolidate and review the CTD Rosette data collected during the `r campaign` campaign. In Step 1, The data are downloaded from the data landing pages and the file paths are reviewed. In Step 2, the file types are counted and compared to what is recorded in the `r campaign` data inventory. Step 3 runs a QAQC check on the spatial data provided in the CTD files. Steps 4 and 5 compute summary statistics for each sensor used on each cast, creates boxplots for each cast depth, and profile plots for each sensor.** 
+**The purpose of this document is to consolidate and review the CTD Rosette data collected during the `r campaign` campaign. In Step 1, The data are downloaded from the data landing pages and the file paths are reviewed. In Step 2, the file types are counted and compared to what is recorded in the `r campaign` data inventory. Step 3 runs a QAQC check on the spatial data provided in the CTD files. Steps 4 and 5 compute summary statistics for each sensor used on each cast, creates boxplots for each cast depth, and profile plots for each sensor.**
 
 The `r campaign` campaign was conducted from `r start_year` to `r end_year`. The information presented here is from `r platform` `r sensor` data collected in the following regions: `r regions`.
 
-1**Step 1:** Download the CTD Rosette files
----------------
+## 1**Step 1:** Download the CTD Rosette files
 
-**Table 1.** File paths for CTD Rosette data downloaded from data Landing Pages . The function that creates this table downloads all of the Shipboard CTD data from the DLPs, looks for the presence key folders ("Profile_Data, "CTD", and "SHIPCTD"), and documents the file paths to each dataset. The goal is for all file paths to be identical. 
+**Table 1.** File paths for CTD Rosette data downloaded from data Landing Pages . The function that creates this table downloads all of the Shipboard CTD data from the DLPs, looks for the presence key folders ("Profile_Data,"CTD", and "SHIPCTD"), and documents the file paths to each dataset. The goal is for all file paths to be identical.
+
 ```{r file paths, echo=FALSE}
 
 tmp <- download_SHIP_CTD_data(expeditions = expeditions,
@@ -97,6 +93,7 @@ DT::datatable(tmp)
 After creating table 1, manually fix file paths and rerun to see results (optional).
 
 **Table 2.** File paths for CTD Rosette data downloaded from Data Landing Pages (DLP) with updates.
+
 ```{r file paths updated, echo=FALSE}
 
 tmp <- download_SHIP_CTD_data(expeditions = expeditions,
@@ -108,10 +105,10 @@ DT::datatable(tmp)
 
 ```
 
-**Step 2:** Count and compare 
----------------
+## **Step 2:** Count and compare
 
-**Table 3.** Comparison of .hex and .cnv files for each expedition with the ASPIRE data inventory.  
+**Table 3.** Comparison of .hex and .cnv files for each expedition with the ASPIRE data inventory.
+
 ```{r n files, echo=FALSE}
 
 tmp <- count_SHIP_CTD_files(expeditions = expeditions,
@@ -123,21 +120,9 @@ DT::datatable(tmp)
 
 ```
 
-If possible, use Seabird SeaTerm software (https://www.seabird.com/software) to convert the hex files to cnv files where missing and rerun the table above. At this point you can determine which expedition folders are missing CTD Rosette files. Follow up with NCEI to get files. 
+If possible, use Seabird SeaTerm software (<https://www.seabird.com/software>) to convert the hex files to cnv files where missing and rerun the table above. At this point you can determine which expedition folders are missing CTD Rosette files. Follow up with NCEI to get files.
 
-```{r}
-
-# install.packages("remotes")
-# remotes::install_github("sean-rohan-NOAA/gapctd")
-
-#tmp <-hex_to_cnv()
-
-
-```
-
-
-**Step 3:** Check latitude and longitude
----------------
+## **Step 3:** Check latitude and longitude
 
 ```{r}
 
@@ -160,7 +145,9 @@ expeditions <- c(
 ASPIRE_SHIP_CTD_data <- compile_SHIP_CTD(expeditions = expeditions,
                                          path = "C:/Users/sarah.groves/Documents/Data/CTD/") %>%
   # Add a column with the campaign name
-  dplyr::mutate(campaign = campaign)
+  dplyr::mutate(campaign = campaign) %>%
+  # Create a month column
+  dplyr::mutate(month = format(date, format = "%m"))
 
 # Export to a csv file for further QAQC
 #write.csv(ASPIRE_SHIP_CTD_data, "C:/Users/sarah.groves/Documents/Data/CTD/DRAFT_ASPIRE_SHIP_CTD_data.csv", row.names = F)
@@ -172,6 +159,7 @@ ASPIRE_SHIP_CTD_data <- compile_SHIP_CTD(expeditions = expeditions,
 ### Do all casts have latitude and longitude in the metadata?
 
 **Table 4.** CTD Rosette casts without latitude and longitude in the metadata.
+
 ```{r}
 
 ctd_missing_latlon <- ASPIRE_SHIP_CTD_data %>%
@@ -194,15 +182,14 @@ missing_latlon <- unique(ctd_missing_latlon$ex_cast)
 
 ```
 
-
 ### Map all casts locations
 
 ```{r map, fig.height = 10, fig.width = 10, echo = FALSE, fig.cap="**Fig. 1.** Map of all CTD Rosette cast locations colored by expedition. See table 4 for expeditions and cast missing latitude and longitude and therefore not included on the map." }
 
 # register google key
-ggmap::register_google(key = "AIzaSyBl6Xqw5P353DgNOWpz-VmCTMzuYN-CUAo") # key is here 
-
-
+ggmap::register_google(key = "AIzaSyDQHwjzb05LsF1meZ1V4NfZc61GH9u4dc0") # key is here
+#
+#
 mean_lon <- mean(ASPIRE_SHIP_CTD_data$deployment_longitude, na.rm = T)
 mean_lat <- mean(ASPIRE_SHIP_CTD_data$deployment_latitude, na.rm = T)
 
@@ -210,27 +197,27 @@ basemap <- ggmap::get_googlemap(center = c(mean_lon,
                                            mean_lat), zoom = 6,
                                 maptype = "satellite")
 
-# plot
+# # plot
 map <-  ggmap::ggmap(basemap) +
   geom_point(data = ASPIRE_SHIP_CTD_data,
              aes(x = deployment_longitude, y = deployment_latitude, color = expedition, fill = expedition),
              shape = 21,
              color = "black",
              size = 3) +
-  ggsn::scalebar(x.min = -75, x.max = -73, y.min = 26, y.max = 27.5, dist = 100, transform = TRUE, 
+  ggsn::scalebar(x.min = -75, x.max = -73, y.min = 26, y.max = 27.5, dist = 100, transform = TRUE,
                  dist_unit = "km", height = 0.2, model = 'WGS84', st.dist = 0.15,
                  box.fill = c("darkgrey", "white"), st.color = "white", st.size = 2) +
   labs(x = "Longitude", y = "Latitude")
+#
+# map
 
-map
-
-#ggplotly(map)
+ggplotly(map)
 ```
 
-**Step 4:** Check sensors
----------------
+## **Step 4:** Check sensors
 
-**Table 5.** Sensors used and units of measure for each cast. 
+**Table 5.** Sensors used and units of measure for each cast.
+
 ```{r}
 
 dat_sen <- ASPIRE_SHIP_CTD_data %>%
@@ -243,12 +230,10 @@ DT::datatable(dat_sen, rownames = F)
 
 Across all casts, the units for each sensor used should be consistent. The oxygen sensors are the most likely to be mixed as there are multiple sensors and units for output and you can assign any unit to any output (labeled oxygen, oxygen2, and oxygen3). Any record of a sensor not being used should be checked in the .hex file and with what is recorded in the CTD Summary Doc to make sure the data were not omitted in the transformation from .hex to .cnv.
 
+## **Step 5:** Run summary statistics
 
-**Step 5:** Run summary statistics
----------------
+**Table 6.** Summary statistics for each sensor used on each cast. Blank cells indicate the sensor was not in use.
 
-
-**Table 6.** Summary statistics for each sensor used on each cast. Blank cells indicate the sensor was not in use. 
 ```{r}
 
 dat_sum <- ASPIRE_SHIP_CTD_data %>%
@@ -267,7 +252,9 @@ dat_sum <- ASPIRE_SHIP_CTD_data %>%
 DT::datatable(dat_sum, rownames = F) 
 
 ```
-**Table 7.** Casts and sensors with negative or 0  values. Note that expeditions EX 1903L1, EX1905L1, and EX1906 did not have turbidity in the original export, probably for good reason. EX1810 had turbidity included in the original export, but all values are 0s. EX1905L1 collected dissolved oxygen in ml/L but EX1810 collected it in mg/L. It is unclear why data values are negative in each instance. Of the 15 casts where fluorescence was collected, 12 have negative data values, tbd on whether this is expected. A CTD Summary Form with documentation of calibration would help clarify whether these data were intentionally omitted from the initial export or are "bad data".
+
+**Table 7.** Casts and sensors with negative or 0 values. Note that expeditions EX 1903L1, EX1905L1, and EX1906 did not have turbidity in the original export, probably for good reason. EX1810 had turbidity included in the original export, but all values are 0s. EX1905L1 collected dissolved oxygen in ml/L but EX1810 collected it in mg/L. It is unclear why data values are negative in each instance. Of the 15 casts where fluorescence was collected, 12 have negative data values, tbd on whether this is expected. A CTD Summary Form with documentation of calibration would help clarify whether these data were intentionally omitted from the initial export or are "bad data".
+
 ```{r}
 
 dat_sum2 <- dat_sum %>%
@@ -279,6 +266,7 @@ DT::datatable(dat_sum2, rownames = F)
 ```
 
 **Table 8.** Casts with oxygen saturation (%) greater than 100%
+
 ```{r}
 
 dat_sum2 <- dat_sum %>%
@@ -290,14 +278,11 @@ DT::datatable(dat_sum2, rownames = F)
 
 ```
 
-
-**Step 6:** Plot the data
----------------
+## **Step 6:** Plot the data
 
 ## Plots {.tabset}
 
 ### Depth boxplots
-
 
 ```{r ctd depth boxplots, fig.height = 8, fig.width = 12, echo = FALSE, fig.cap="**Fig. 2.** Box-plots of each CTD Rosette cast by expedition"}
 
@@ -364,7 +349,6 @@ plot2
 
 
 ```
-
 
 ### All sensors by expedition
 
@@ -509,12 +493,7 @@ for(i in expeditions){
 
 ```
 
-
-
 ### Sensor profiles {.tabset}
-
-
-
 
 ```{r}
 
@@ -534,6 +513,14 @@ expeditions <- c(
   #  "2203"  - Ship CTD files missing
 )
 
+# read_NOAA <- function(conn, # NOAA_path$external or URL path to data
+#                       an,   # Objectively analyzed climatology
+#                       mn,   # Statistical mean
+#                       dd,   # Number of observations
+#                       ma,   # Seasonal or monthly climatology minus annual climatology
+#                       sd,   # Standard deviation from statistical mean
+#                       oa    # Statistical mean minus objectively analyzed climatology
+#                       )
 
 make_sensor_profiles <- function(sensor) {
   
@@ -543,8 +530,8 @@ make_sensor_profiles <- function(sensor) {
     cruise <- ASPIRE_SHIP_CTD_data %>% dplyr::filter(expedition == i)
     
     cast <- unique(cruise$cast)
-    #j <- "ctd001"
-    for (j in cast) {
+    
+    for(j in cast){
       
       ctd_rosette_data <- cruise %>% dplyr::filter(cast == j)
       
@@ -553,260 +540,284 @@ make_sensor_profiles <- function(sensor) {
         
         NOAA <- get_NOAA_WOA_data(var = "temperature",
                                   spat_res = 1,
-                                  av_period = annual,
+                                  av_period = unique(ctd_rosette_data$month),
                                   cache = T)
         
-        plot_NOAA <- function(NOAA, expedition = i, cast = j, epsg = NULL) 
+        WOA_dat <- extract_NOAA_WOA(NOAA,
+                                    ex = i,
+                                    ctd_cast = j,
+                                    epsg = NULL) 
+        
+        print(
+          ggplot() +
+            geom_path(data =ctd_rosette_data, aes(x = temperature, y = depth),color = "black", linewidth = 1.5) +
+            geom_path(data =WOA_dat, aes(x = t_an, y = depth), color = "red", linewidth = 1.5) +
+            labs(x = "Temperature (°C)", y = "Depth (m)") +
+            scale_y_reverse() +
+            scale_x_continuous(position = "top",
+                               breaks = c(5, 10, 15, 20, 25, 30)) +
+            theme_bw() +
+            ggtitle(paste(i, j, sep = " "))
           
-          print(
-            ggplot() +
-              geom_path(data =ctd_rosette_data, aes(x = temperature, y = depth),color = "black", linewidth = 1.5) +
-              geom_path(data =WOA_dat, aes(x = t_an, y = depth), color = "red", linewidth = 1.5) +
-              labs(x = "Temperature (°C)", y = "Depth (m)") +
-              scale_y_reverse() +
-              scale_x_continuous(position = "top",
-                                 breaks = c(5, 10, 15, 20, 25, 30)) +
-              theme_bw()
-            
-          )
-          
-        }
-        
-        
-        if(sensor == "conductivity"){
-          print(
-            ggplot(ctd_rosette_data, aes(x = conductivity, y = depth)) +
-              geom_path(colour = "#003087") +
-              labs(x = "Conductivity (S/m)", y = "Depth (m)") +
-              scale_y_reverse() +
-              scale_x_continuous(position = "top") + 
-              theme_bw() +
-              theme_SHIP_CTD() +
-              ggtitle(paste(i, j, sep = " "))
-          )
-        }
-        
-        if(sensor == "salinity"){
-          print(
-            ggplot(ctd_rosette_data, aes(x = salinity, y = depth)) +
-              geom_path(colour = "#003087", linewidth = 1.5) +
-              labs(x = "Salinity (PSU)", y = "Depth (m)") +
-              scale_y_reverse() +
-              scale_x_continuous(position = "top") + 
-              theme_bw() +
-              theme_SHIP_CTD() +
-              ggtitle(paste(i, j, sep = " "))
-          )
-        }
-        
-        if(sensor == "density"){
-          print(
-            ggplot(ctd_rosette_data, aes(x = density, y = depth)) +
-              geom_path(colour = "black") +
-              labs(x = bquote('Density (kg/'~m^3~')'),
-                   y = "Depth (m)") +
-              scale_y_reverse() +
-              scale_x_continuous(position = "top") + 
-              theme_bw() +
-              theme_SHIP_CTD() +
-              ggtitle(paste(i, j, sep = " "))
-          )
-        }
-        
-        if(sensor == "oxygen1"){
-          print(
-            ggplot(ctd_rosette_data, aes(x = oxygen, y = depth)) +
-              geom_path(colour = "#003087", linewidth = 1.5) +
-              labs(x = "Oxygen (%)", y = "Depth (m)") +
-              scale_y_reverse() +
-              scale_x_continuous(position = "top") + 
-              theme_bw() +
-              theme_SHIP_CTD() +
-              ggtitle(paste(i, j, sep = " "))
-          )
-        }
-        
-        
-        if(sensor == "oxygen2"){
-          print(
-            ggplot(ctd_rosette_data, aes(x = oxygen2, y = depth)) +
-              geom_path(colour = "#003087", linewidth = 1.5) +
-              labs(x = "Oxygen (mg/L)", y = "Depth (m)") +
-              scale_y_reverse() +
-              scale_x_continuous(position = "top") + 
-              theme_bw() +
-              theme_SHIP_CTD() +
-              ggtitle(paste(i, j, sep = " "))
-          )
-        }
-        
-        
-        if(sensor == "o2 potential"){
-          print(
-            ggplot(ctd_rosette_data, aes(x = upoly, y = depth)) +
-              geom_path(colour = "black") +
-              labs(x = "Oxygen reduction potential", y = "Depth (m)") +
-              scale_y_reverse() +
-              scale_x_continuous(position = "top") + 
-              theme_bw() +
-              theme_SHIP_CTD() +
-              ggtitle(paste(i, j, sep = " "))
-          )
-        }
-        
-        if(sensor == "turbidity"){
-          print(
-            ggplot(ctd_rosette_data, aes(x = turbidity, y = depth)) +
-              geom_path(colour = "black") +
-              labs(x = "Turbidity (NTU)", y = "Depth (m)") +
-              scale_y_reverse() +
-              scale_x_continuous(position = "top") + 
-              theme_bw() +
-              theme_SHIP_CTD() +
-              ggtitle(paste(i, j, sep = " "))
-          )
-        }
-        if(sensor == "fluorescence"){
-          print(
-            ggplot(ctd_rosette_data, aes(x = fluorescence, y = depth)) +
-              geom_path(colour = "black") +
-              labs(x = "Fluorescence", y = "Depth (m)") +
-              scale_y_reverse() +
-              scale_x_continuous(position = "top") + 
-              theme_bw() +
-              theme_SHIP_CTD() +
-              ggtitle(paste(i, j, sep = " "))
-          )
-        }
-        
-        
-        if(sensor == "sound speed"){
-          print(
-            ggplot(ctd_rosette_data, aes(x = soundSpeed, y = depth)) +
-              geom_path(colour = "black") +
-              labs(x = "Sound speed (m/s)", y = "Depth (m)") +
-              scale_y_reverse() +
-              scale_x_continuous(position = "top") + 
-              theme_bw() +
-              theme_SHIP_CTD() +
-              ggtitle(paste(i, j, sep = " "))
-          )
-        }
-        
-        if(sensor == "nitrogen"){
-          print(
-            ggplot(ctd_rosette_data, aes(x = nitrogenSaturation, y = depth)) +
-              geom_path(colour = "black") +
-              labs(x = "Nitrogen (mg/L)", y = "Depth (m)") +
-              scale_y_reverse() +
-              scale_x_continuous(position = "top") + 
-              theme_bw() +
-              theme_SHIP_CTD() +
-              ggtitle(paste(i, j, sep = " "))
-          )
-        }
-        
-        
-        #print(ggarrange(temp, cond, sal, dens, oxygen, up, ncol = 3, nrow = 2))
-        
+        )
         
       }
       
+      
+      if(sensor == "conductivity"){
+        print(
+          ggplot(ctd_rosette_data, aes(x = conductivity, y = depth)) +
+            geom_path(colour = "#003087") +
+            labs(x = "Conductivity (S/m)", y = "Depth (m)") +
+            scale_y_reverse() +
+            scale_x_continuous(position = "top") + 
+            theme_bw() +
+            theme_SHIP_CTD() +
+            ggtitle(paste(i, j, sep = " "))
+        )
+      }
+      
+      if(sensor == "salinity"){
+        
+        NOAA <- get_NOAA_WOA_data(var = "salinity",
+                                  spat_res = 1,
+                                  av_period = unique(ctd_rosette_data$month),
+                                  cache = T)
+        
+        WOA_dat <- extract_NOAA_WOA(NOAA,
+                                    ex = i,
+                                    ctd_cast = j,
+                                    epsg = NULL)
+         print(
+          ggplot() +
+            geom_path(data =ctd_rosette_data, aes(x = salinity, y = depth),color = "black", linewidth = 1.5) +
+            geom_path(data =WOA_dat, aes(x = s_an, y = depth), color = "red", linewidth = 1.5) +
+            labs(x = "Salinity (PSU)", y = "Depth (m)") +
+            scale_y_reverse() +
+            scale_x_continuous(position = "top",
+                               breaks = c(5, 10, 15, 20, 25, 30)) +
+            theme_bw() +
+            ggtitle(paste(i, j, sep = " "))
+          
+        )
+      }
+      
+      if(sensor == "density"){
+        
+         NOAA <- get_NOAA_WOA_data(var = "density",
+                                  spat_res = 1,
+                                  av_period = unique(ctd_rosette_data$month),
+                                  cache = T)
+        
+        WOA_dat <- extract_NOAA_WOA(NOAA,
+                                    ex = i,
+                                    ctd_cast = j,
+                                    epsg = NULL) 
+        
+        print(
+          ggplot() +
+            geom_path(data =ctd_rosette_data, aes(x = density, y = depth),color = "black", linewidth = 1.5) +
+            geom_path(data =WOA_dat, aes(x = I_an, y = depth), color = "red", linewidth = 1.5) +
+            labs(x = bquote('Density (kg/'~m^3~')'),
+                 y = "Depth (m)") +
+            scale_y_reverse() +
+             scale_x_continuous(position = "top") +
+            theme_bw() +
+            ggtitle(paste(i, j, sep = " "))
+          
+        )
+        
+      }
+      
+      if(sensor == "oxygen1"){
+        print(
+          ggplot(ctd_rosette_data, aes(x = oxygen, y = depth)) +
+            geom_path(colour = "#003087", linewidth = 1.5) +
+            labs(x = "Oxygen (%)", y = "Depth (m)") +
+            scale_y_reverse() +
+            scale_x_continuous(position = "top") + 
+            theme_bw() +
+            theme_SHIP_CTD() +
+            ggtitle(paste(i, j, sep = " "))
+        )
+      }
+      
+      
+      if(sensor == "oxygen2"){
+        print(
+          ggplot(ctd_rosette_data, aes(x = oxygen2, y = depth)) +
+            geom_path(colour = "#003087", linewidth = 1.5) +
+            labs(x = "Oxygen (mg/L)", y = "Depth (m)") +
+            scale_y_reverse() +
+            scale_x_continuous(position = "top") + 
+            theme_bw() +
+            theme_SHIP_CTD() +
+            ggtitle(paste(i, j, sep = " "))
+        )
+      }
+      
+      
+      if(sensor == "o2 potential"){
+        print(
+          ggplot(ctd_rosette_data, aes(x = upoly, y = depth)) +
+            geom_path(colour = "black") +
+            labs(x = "Oxygen reduction potential", y = "Depth (m)") +
+            scale_y_reverse() +
+            scale_x_continuous(position = "top") + 
+            theme_bw() +
+            theme_SHIP_CTD() +
+            ggtitle(paste(i, j, sep = " "))
+        )
+      }
+      
+      if(sensor == "turbidity"){
+        print(
+          ggplot(ctd_rosette_data, aes(x = turbidity, y = depth)) +
+            geom_path(colour = "black") +
+            labs(x = "Turbidity (NTU)", y = "Depth (m)") +
+            scale_y_reverse() +
+            scale_x_continuous(position = "top") + 
+            theme_bw() +
+            theme_SHIP_CTD() +
+            ggtitle(paste(i, j, sep = " "))
+        )
+      }
+      if(sensor == "fluorescence"){
+        print(
+          ggplot(ctd_rosette_data, aes(x = fluorescence, y = depth)) +
+            geom_path(colour = "black") +
+            labs(x = "Fluorescence", y = "Depth (m)") +
+            scale_y_reverse() +
+            scale_x_continuous(position = "top") + 
+            theme_bw() +
+            theme_SHIP_CTD() +
+            ggtitle(paste(i, j, sep = " "))
+        )
+      }
+      
+      
+      if(sensor == "sound speed"){
+        print(
+          ggplot(ctd_rosette_data, aes(x = soundSpeed, y = depth)) +
+            geom_path(colour = "black") +
+            labs(x = "Sound speed (m/s)", y = "Depth (m)") +
+            scale_y_reverse() +
+            scale_x_continuous(position = "top") + 
+            theme_bw() +
+            theme_SHIP_CTD() +
+            ggtitle(paste(i, j, sep = " "))
+        )
+      }
+      
+      if(sensor == "nitrogen"){
+        print(
+          ggplot(ctd_rosette_data, aes(x = nitrogenSaturation, y = depth)) +
+            geom_path(colour = "black") +
+            labs(x = "Nitrogen (mg/L)", y = "Depth (m)") +
+            scale_y_reverse() +
+            scale_x_continuous(position = "top") + 
+            theme_bw() +
+            theme_SHIP_CTD() +
+            ggtitle(paste(i, j, sep = " "))
+        )
+      }
+      
+      
+      #print(ggarrange(temp, cond, sal, dens, oxygen, up, ncol = 3, nrow = 2))
+      
+      
     }
+    
   }
-  ```
-  
-  
-  
-  
-  ```{r}
-  
-  # Create base range plots for temperature, phosphate, nitrate, silicate, oxygen, salinity, density
-  
-  ```
-  
-  #### Temperature
-  ```{r}
-  
-  make_sensor_profiles(sensor="temperature")
-  
-  
-  
-  ```
-  
-  
-  #### Conductivity
-  ```{r}
-  
-  make_sensor_profiles(sensor="conductivity")
-  
-  ```
-  
-  
-  #### Salinity
-  ```{r}
-  
-  make_sensor_profiles(sensor="salinity")
-  
-  ```
-  
-  
-  #### Density
-  ```{r}
-  
-  make_sensor_profiles(sensor="density")
-  
-  ```
-  
-  
-  #### Oxygen (%)
-  ```{r}
-  
-  make_sensor_profiles(sensor="oxygen1")
-  
-  ```
-  
-  
-  #### Oxygen (mg/L)
-  ```{r}
-  
-  make_sensor_profiles(sensor="oxygen2")
-  
-  ```
-  
-  #### Oxygen reduction potential
-  ```{r}
-  
-  make_sensor_profiles(sensor="o2 potential")
-  
-  ```
-  
-  #### Turbidity
-  ```{r}
-  
-  make_sensor_profiles(sensor="turbidity")
-  
-  ```
-  
-  #### Fluorescence
-  ```{r}
-  
-  make_sensor_profiles(sensor="fluorescence")
-  
-  ```
-  
-  #### Sound speed
-  ```{r}
-  
-  make_sensor_profiles(sensor="sound speed")
-  
-  ```
-  
-  #### Nitrogen
-  ```{r}
-  
-  make_sensor_profiles(sensor="nitrogen")
-  
-  ```
-  
-  
+}
+```
+
+
+#### Temperature
+
+```{r}
+
+make_sensor_profiles(sensor="temperature")
+
+
+```
+
+#### Conductivity
+
+```{r}
+
+make_sensor_profiles(sensor="conductivity")
+
+```
+
+#### Salinity
+
+```{r}
+
+make_sensor_profiles(sensor="salinity")
+
+```
+
+#### Density
+
+```{r}
+
+make_sensor_profiles(sensor="density")
+
+```
+
+#### Oxygen (%)
+
+```{r}
+
+make_sensor_profiles(sensor="oxygen1")
+
+```
+
+#### Oxygen (mg/L)
+
+```{r}
+
+make_sensor_profiles(sensor="oxygen2")
+
+```
+
+#### Oxygen reduction potential
+
+```{r}
+
+make_sensor_profiles(sensor="o2 potential")
+
+```
+
+#### Turbidity
+
+```{r}
+
+make_sensor_profiles(sensor="turbidity")
+
+```
+
+#### Fluorescence
+
+```{r}
+
+make_sensor_profiles(sensor="fluorescence")
+
+```
+
+#### Sound speed
+
+```{r}
+
+make_sensor_profiles(sensor="sound speed")
+
+```
+
+#### Nitrogen
+
+```{r}
+
+make_sensor_profiles(sensor="nitrogen")
+
+```

@@ -1,3 +1,35 @@
+# Function to count Okeanos Explorer CTD Rosette files and check filepaths
+
+# Calls: download_SHIP_CTD_data.R
+
+# Called by: NOAA Explore QAQC_CTD Rosette.Rmd
+
+# NOAA Exploration Science and Technology Data Analysis team: Groves, Egan
+# Last update: Mar 2023
+
+
+#' Count ship CTD Rosette files
+#' @export
+#' @description
+#' Counts ship CTD files and filepath structure
+#' @param expeditions A list indicating the expeditions of interest (must be from the ASPIRE campaign where CTD rosette data were collected; must be '"1805"', '"1810"','"1812"', '"1903l1"','"1905l1"', '"1906"','"2101"','"2102"','"2107"')
+#' @param data_inventory The ASPIRE campaign data inventory
+#' @param path A filepath to where the CTD files are located.
+#' @returns a dataframe with CTD file and data structure and counts
+#' @details
+#' Cool blurb about NOAA Exploration
+#' @seealso \code{\link{https://github.com/shgroves/NOAA.ASPIRE}}
+#' @examples
+#'
+#' First run:
+#' ASPIRE_dat <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/19jRXe7SeDQRjv-guH2po5xTHqfzfeicDzZ74cb3OnNY/edit?pli=1#gid=0',
+#'.name_repair = "universal")
+#'
+#' count_SHIP_CTD_files(expeditions = expeditions,
+#'                     path = "C:/Users/sarah.groves/Documents/Data/CTD/",
+#'                     data_inventory = ASPIRE_dat)
+#'
+#' @importFrom magrittr %>%
 
 
 count_SHIP_CTD_files <- function(expeditions, data_inventory, path){

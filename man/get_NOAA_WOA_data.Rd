@@ -11,26 +11,31 @@ url_parser(var, spat_res, av_period, cache = FALSE)
 }
 \arguments{
 \item{var}{The chemical or physical variable of interest (possible choices:
-\code{"temperature"}, \code{"phosphate"}, \code{"nitrate"}, \code{"silicate"}, \code{"oxygen"},
+\code{"temperature"}, \code{"conductivity"}, \code{"oxygen"}, \code{"mixed layer depth"},
 \code{"salinity"}, \code{"density"}).}
 
-\item{spat_res}{Spatial resolution, either 1 or 5 degree grid-cells (numeric)
-.}
+\item{spat_res}{Spatial resolution, for temperature and salinity, either 1 or .25 degree grid-cells (numeric).}
 
-\item{av_period}{Temporal resolution, either \code{"annual"}, specific seasons
-(e.g. \code{"winter"}), or month (e.g. \code{"August"}).}
+\item{av_period}{Temporal resolution, either \code{"annual"} or month (Will pull the month the cast was made from the data).
+Defaults to annual if month is not available in the data.}
 
 \item{cache}{Caching the extracted NOAA file in the package's \code{extdata}
-directory (default = \code{FALSE}). Size of individual files is around 12 Mb. Use
-\code{\link[=list_NOAA]{list_NOAA()}} to list cached data resources.}
+directory (default = \code{FALSE}). Size of individual files is around 12 Mb.}
 }
 \value{
-\code{\link[stars:st_as_stars]{stars}} object or path.
+\code{\link[stars:st_as_stars]{stars}} object
 }
 \description{
 Retrieves data from the NOAA World Ocean Atlas. Adapted from the function "get_NOAA" from the oceanexplorer package by Martin Schobben
 }
 \details{
+Calls: url_parser.R, read_NetCDF.R
+
+Called by: extract_NOAA_WOA.R, NOAA Explore QAQC_CTD Rosette.Rmd
+
+NOAA Exploration Science and Technology Data Analysis team: Groves, Egan
+Last update: Oct. 2023
+
 Functions to retrieve data from the
 \href{https://www.ncei.noaa.gov/products/world-ocean-atlas}{NOAA World Ocean Atlas}
 . Data is an 3D array (longitude, latitude, and depth) and is loaded as a
@@ -52,5 +57,5 @@ get_NOAA_WOA_data("oxygen", 1, "annual")
 }
 }
 \seealso{
-\href{https://r-spatial.github.io/stars/articles/stars1.html}{Introduction to the stars package}
+\href{https://r-spatial.github.io/stars/articles/stars1.html}{Introduction to the stars package}, code{\link{https://github.com/shgroves/NOAA.ASPIRE}}
 }

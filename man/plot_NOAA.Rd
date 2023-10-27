@@ -4,22 +4,19 @@
 \alias{plot_NOAA}
 \title{Plotting the global NOAA World Ocean Atlas}
 \usage{
-plot_NOAA(NOAA, depth = 0, points = NULL, epsg = NULL, rng = NULL)
+plot_NOAA(NOAA, expedition, cast, epsg = NULL)
 }
 \arguments{
 \item{NOAA}{Dataset of the NOAA World Ocean Atlas
 (with \code{\link[=get_NOAA]{get_NOAA()}}).}
 
-\item{depth}{Depth in meters.}
-
-\item{points}{Add locations of extracted point geometry (\code{\link[sf:sf]{sf}}
-object).}
+\item{expedition}{the ASPIRE campaign expedition (must be '"1805"', '"1810"','"1812"', '"1903l1"','"1905l1"', '"1906"','"2101"','"2102"','"2107"')}
 
 \item{epsg}{The epsg used to project the data (currently supported \code{4326},
 \code{3031}and \code{3995}).}
 
-\item{rng}{A vector of two numeric values for the range of the oceanographic
-variable.}
+\item{points}{Add locations of extracted point geometry (\code{\link[sf:sf]{sf}}
+object).}
 }
 \value{
 \code{\link[ggplot2:ggplot]{ggplot2::ggplot()}}

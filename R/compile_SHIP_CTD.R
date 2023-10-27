@@ -130,7 +130,8 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
                         deployment_latitude = tmp@metadata$latitude,
                         max_depth = max(depth),
                         date = tmp@metadata$date,
-                        year =  format(date, format = "%Y")) %>%
+                        year =  format(date, format = "%Y"),
+                        month = format(date, format = "%m")) %>%
 
           #Pull out all the units for each sensor to check for consistency across casts
           dplyr::mutate(depth_unit = ifelse(length(as.character(tmp@metadata$units$depth$unit)) > 0, as.character(tmp@metadata$units$depth$unit),
@@ -170,7 +171,7 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
                         fluor_sensor = ifelse(is.na(fluor_unit), "Sensor not used", tmp@metadata$dataNamesOriginal$fluorescence),
                         upoly_sensor = tmp@metadata$dataNamesOriginal$upoly,
                         nit_sensor = tmp@metadata$dataNamesOriginal$nitrogenSaturation) %>%
-          dplyr::select(-flag, -filename, -expedition_num, -date)
+          dplyr::select(-flag, -filename, -expedition_num)
 
         dat2 <- dplyr::bind_rows(dat2, tmp2)
 
@@ -192,7 +193,8 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
                         deployment_latitude = tmp@metadata$latitude,
                         max_depth = max(depth),
                         date = tmp@metadata$date,
-                        year =  format(date, format = "%Y")) %>%
+                        year =  format(date, format = "%Y"),
+                        month = format(date, format = "%m")) %>%
 
           #Pull out all the units for each sensor to check for consistency across casts
           dplyr::mutate(depth_unit = ifelse(length(as.character(tmp@metadata$units$depth$unit)) > 0, as.character(tmp@metadata$units$depth$unit),
@@ -233,7 +235,7 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
                         upoly_sensor = tmp@metadata$dataNamesOriginal$upoly,
                         nit_sensor = tmp@metadata$dataNamesOriginal$nitrogenSaturation) %>%
 
-          dplyr::select(-flag, -filename, -expedition_num, -date)
+          dplyr::select(-flag, -filename, -expedition_num)
 
         dat2 <- dplyr::bind_rows(dat2, tmp2)
 
@@ -244,7 +246,7 @@ compile_SHIP_CTD <- function(expeditions, path, return_dataframe = "NULL") {
     # Compile the CTD data from each expedition into a single dataframe
 
     SHIP_CTD_data <- dplyr::bind_rows(SHIP_CTD_data, dat2) %>%
-      dplyr::select(platform, year, expedition, station, cast, deployment_latitude, deployment_longitude, max_depth, depth, depth_sensor, depth_unit,
+      dplyr::select(platform, year, date, month, expedition, station, cast, deployment_latitude, deployment_longitude, max_depth, depth, depth_sensor, depth_unit,
                     temperature, temp_sensor,  temp_unit, conductivity, cond_sensor, cond_unit,  salinity, sal_sensor, sal_unit, density, den_sensor, den_unit,
                     oxygen, oxy_sensor, oxy_unit, oxygen2, oxy2_sensor, oxy2_unit, soundSpeed, sS_sensor, sS_unit,
                     turbidity, turb_sensor, turb_unit, fluorescence, fluor_sensor, fluor_unit, upoly, upoly_sensor, upoly_unit, nitrogenSaturation, nit_sensor, nit_unit,  pressure)

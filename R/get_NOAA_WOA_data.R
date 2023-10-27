@@ -2,6 +2,14 @@
 #'
 #' Retrieves data from the NOAA World Ocean Atlas. Adapted from the function "get_NOAA" from the oceanexplorer package by Martin Schobben
 #'
+#' Calls: url_parser.R, read_NetCDF.R
+#'
+#' Called by: extract_NOAA_WOA.R, NOAA Explore QAQC_CTD Rosette.Rmd
+#'
+#' NOAA Exploration Science and Technology Data Analysis team: Groves, Egan
+#' Last update: Oct. 2023
+#'
+#'
 #' Functions to retrieve data from the
 #' [NOAA World Ocean Atlas](https://www.ncei.noaa.gov/products/world-ocean-atlas)
 #' . Data is an 3D array (longitude, latitude, and depth) and is loaded as a
@@ -10,20 +18,21 @@
 #' cache the extracted files (default: `cache = FALSE`). The cached file will
 #' then reside in the package's `extdata` directory.
 #'
-#' @seealso [Introduction to the stars package](https://r-spatial.github.io/stars/articles/stars1.html)
+#' @seealso [Introduction to the stars package](https://r-spatial.github.io/stars/articles/stars1.html), code{\link{https://github.com/shgroves/NOAA.ASPIRE}}
 #'
 #' @param var The chemical or physical variable of interest (possible choices:
 #'  `"temperature"`, `"conductivity"`, `"oxygen"`, `"mixed layer depth"`,
 #'  `"salinity"`, `"density"`).
-#' @param spat_res Spatial resolution, for temperature and salinity, either 1 or .25 degree grid-cells (numeric)
-#'  .
-#' @param av_period Temporal resolution, either `"annual"`, specific seasons
-#'  (e.g. `"winter"`), or month (e.g. `"August"`).
-#' @param cache Caching the extracted NOAA file in the package's `extdata`
-#'  directory (default = `FALSE`). Size of individual files is around 12 Mb. Use
-#'  [list_NOAA()] to list cached data resources.
 #'
-#' @return [`stars`][stars::st_as_stars()] object or path.
+#' @param spat_res Spatial resolution, for temperature and salinity, either 1 or .25 degree grid-cells (numeric).
+#'
+#' @param av_period Temporal resolution, either `"annual"` or month (Will pull the month the cast was made from the data).
+#' Defaults to annual if month is not available in the data.
+#'
+#' @param cache Caching the extracted NOAA file in the package's `extdata`
+#'  directory (default = `FALSE`). Size of individual files is around 12 Mb.
+#'
+#' @return [`stars`][stars::st_as_stars()] object
 #' @export
 #'
 #' @examples
@@ -77,7 +86,7 @@ get_NOAA_WOA_data <- function(var, spat_res, av_period, cache = FALSE) {
     NOAA <- readRDS(fs::path(pkg_path1, NOAA_path$local)) |> stars::st_as_stars()
   } else {
     # get netcdf
-    NOAA <- read_NOAA(NOAA_path$external, stat)
+    NOAA <- read_netCDF(NOAA_path$external, stat)
 
     if (isTRUE(cache)) {
 
@@ -108,11 +117,6 @@ url_parser <- function(var, spat_res, av_period, cache = FALSE) {
   #WOA18 <- c("conductivity", "oxygen", "mixed layer depth", "density", "temperature")
   WOA18 <- c("conductivity", "oxygen", "mixed layer depth", "density")
 
-  # temporal resolution
-  averaging_periods <- c("annual", month.name, "winter", "spring", "summer",
-                         "autumn")
-
-  stopifnot(av_period %in% averaging_periods)
 
   if (var %in% WOA23) {
     # base path to NCEI server
@@ -151,13 +155,23 @@ url_parser <- function(var, spat_res, av_period, cache = FALSE) {
     v <- strsplit(var, "")[[1]][1]
   }
 
+
+  # temporal resolution
+
+  months <- c("01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")
+
   # averaging period
-  tp <- grep(av_period, averaging_periods, ignore.case = TRUE) - 1
-  tp <- sprintf(fmt = "%02.0f", tp)
+  if (av_period %in% months) {
+  tp <- av_period
+  } else {
+  tp <- "01"
+  }
+
+  # averaging_periods <- c("annual", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")
+  #
+  # stopifnot(av_period %in% averaging_periods)
+
   # grid-cell size
-
-  #gr <- if(spat_res > 1) "5d" else "01"
-
   if (var %in% WOA23) {
     gr <- if(spat_res == 1) "01" else "04"
 
@@ -212,49 +226,7 @@ url_parser <- function(var, spat_res, av_period, cache = FALSE) {
   }
 } # END URL PARSER FUNCTION
 
-# read the NOAA netcdf note conn = NOAA_path$external
-read_NOAA <- function(conn, var) {
 
-  # make connection
-  nc <- RNetCDF::open.nc(external_path)
-
-  # variable
-  lat <- RNetCDF::var.get.nc(nc, "lat")
-  lon <- RNetCDF::var.get.nc(nc, "lon")
-  depth <- RNetCDF::var.get.nc(nc, "depth")
-  lat_bnds <- RNetCDF::var.get.nc(nc, "lat_bnds")
-  lon_bnds <- RNetCDF::var.get.nc(nc, "lon_bnds")
-  depth_bnds <- RNetCDF::var.get.nc(nc, "depth_bnds")
-  attr <- RNetCDF::var.get.nc(nc, var)
-
-  # close connection
-  RNetCDF::close.nc(nc)
-
-  st <- stars::st_as_stars(attr) |>
-    stars::st_set_dimensions(
-      which = 1,
-      offset = min(lon_bnds),
-      delta = unique(diff(lon)),
-      refsys = sf::st_crs(4326),
-      names = "lon"
-    ) |>
-    stars::st_set_dimensions(
-      which = 2,
-      offset = min(lat_bnds),
-      delta = unique(diff(lat)),
-      refsys = sf::st_crs(4326),
-      names = "lat"
-    ) |>
-    stars::st_set_dimensions(
-      which = 3,
-      values = depth_bnds[1, ],
-      names = "depth"
-    )
-
-  # variable name
-  names(st) <- var
-  st
-}
 
 
 

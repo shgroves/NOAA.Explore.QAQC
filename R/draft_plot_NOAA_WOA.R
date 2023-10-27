@@ -52,8 +52,8 @@ plot_NOAA <- function(NOAA, expedition, cast, epsg = NULL) {
 
   CTD <- NOAA.Explore.QAQC::ASPIRE_SHIP_CTD_data |>
     dplyr::select(expedition, cast, deployment_longitude, deployment_latitude, depth, temperature) |> # Later turn temperature to a variable
-    dplyr::filter(expedition == expedition) |>
-    dplyr::filter(cast == cast)
+    dplyr::filter(expedition == i) |>
+    dplyr::filter(cast == j)
 
   # Create variables to add to the WOA dataset
 
@@ -63,8 +63,8 @@ plot_NOAA <- function(NOAA, expedition, cast, epsg = NULL) {
   # Create a dataframe of just the points of interest for a
   xy <- NOAA.Explore.QAQC::ASPIRE_SHIP_CTD_data |>
     dplyr::select(expedition, cast, deployment_longitude, deployment_latitude) |>
-    dplyr::filter(expedition == expedition) |>
-    dplyr::filter(cast == cast) |>
+    dplyr::filter(expedition == i) |>
+    dplyr::filter(cast == j) |>
     # For now, just take the mean of the two points, update later
     dplyr::summarise(lat_degrees = mean(deployment_latitude),
                      lon_degrees = mean(deployment_longitude), .groups = c("expedition", "cast"))
