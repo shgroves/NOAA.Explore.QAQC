@@ -572,7 +572,6 @@ make_sensor_profiles <- function(sensor) {
             scale_y_reverse() +
             scale_x_continuous(position = "top") + 
             theme_bw() +
-            theme_SHIP_CTD() +
             ggtitle(paste(i, j, sep = " "))
         )
       }
@@ -589,16 +588,15 @@ make_sensor_profiles <- function(sensor) {
                                     ctd_cast = j,
                                     epsg = NULL)
          print(
-          ggplot() +
-            geom_path(data =ctd_rosette_data, aes(x = salinity, y = depth),color = "black", linewidth = 1.5) +
-            geom_path(data =WOA_dat, aes(x = s_an, y = depth), color = "red", linewidth = 1.5) +
-            labs(x = "Salinity (PSU)", y = "Depth (m)") +
-            scale_y_reverse() +
-            scale_x_continuous(position = "top",
-                               breaks = c(5, 10, 15, 20, 25, 30)) +
-            theme_bw() +
-            ggtitle(paste(i, j, sep = " "))
-          
+           ggplot() +
+             geom_path(data =ctd_rosette_data, aes(x = salinity, y = depth),color = "black", linewidth = 1.5) +
+             geom_path(data =WOA_dat, aes(x = s_an, y = depth), color = "red", linewidth = 1.5) +
+             labs(x = "Salinity (PSU)", y = "") +
+             scale_y_reverse() +
+             scale_x_continuous(position = "top") + 
+             theme_bw() +
+             ggtitle(paste(i, j, sep = " "))
+           
         )
       }
       

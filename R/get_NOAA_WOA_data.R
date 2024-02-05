@@ -52,10 +52,10 @@ get_NOAA_WOA_data <- function(var, spat_res, av_period, cache = FALSE) {
   # Set categories for data type based on temporal availability at https://www.ncei.noaa.gov/products/world-ocean-atlas
   # For temp and salinity use WOA 2023 data; everything else uses WOA 2018 data
 
-  #WOA23 <- c("salinity")
-  WOA23 <- c("salinity", "temperature")
-  #WOA18 <- c("conductivity", "oxygen", "mixed layer depth", "density", "temperature")
-  WOA18 <- c("conductivity", "oxygen", "mixed layer depth", "density")
+  WOA23 <- c("null")
+  #WOA23 <- c("salinity", "temperature")
+  WOA18 <- c("conductivity", "oxygen", "mixed layer depth", "density", "temperature", "salinity")
+  #WOA18 <- c("conductivity", "oxygen", "mixed layer depth", "density")
 
   # abbreviate variable - take the first letter for temp, salinity
   if (var == "density") {
@@ -112,10 +112,10 @@ get_NOAA_WOA_data <- function(var, spat_res, av_period, cache = FALSE) {
 
 url_parser <- function(var, spat_res, av_period, cache = FALSE) {
 
-  #WOA23 <- c("salinity")
-  WOA23 <- c("salinity", "temperature")
-  #WOA18 <- c("conductivity", "oxygen", "mixed layer depth", "density", "temperature")
-  WOA18 <- c("conductivity", "oxygen", "mixed layer depth", "density")
+  WOA23 <- c("null")
+  #WOA23 <- c("salinity", "temperature")
+  WOA18 <- c("conductivity", "oxygen", "mixed layer depth", "density", "temperature", "salinity")
+  #WOA18 <- c("conductivity", "oxygen", "mixed layer depth", "density")
 
 
   if (var %in% WOA23) {
@@ -123,14 +123,14 @@ url_parser <- function(var, spat_res, av_period, cache = FALSE) {
     base_path <- "https://www.ncei.noaa.gov/thredds-ocean/dodsC/woa23/DATA"
   } else{
 
-    base_path <- "https://www.ncei.noaa.gov/thredds-ocean/dodsC/ncei/woa"
+    base_path <- "https://www.ncei.noaa.gov/thredds-ocean/fileServer/ncei/woa"
   }
 
   # grouped variables
   #grp1 <- c("oxygen", "density")
-  grp1 <- c("oxygen", "density", "temperature")
-  #grp2 <- c("salinity")
-  grp2 <- c("salinity", "temperature")
+  grp1 <- c("oxygen", "density", "temperature", "salinity", "temperature")
+  grp2 <- c("null")
+  #grp2 <- c("salinity", "temperature")
   grp3 <- c("conductivity", "mixed layer depth")
   # see https://www.ncei.noaa.gov/data/oceans/woa/WOA18/DOC/woa18documentation.pdf
   # for metadata names
@@ -164,12 +164,9 @@ url_parser <- function(var, spat_res, av_period, cache = FALSE) {
   if (av_period %in% months) {
   tp <- av_period
   } else {
-  tp <- "01"
+  tp <- "00"
   }
 
-  # averaging_periods <- c("annual", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")
-  #
-  # stopifnot(av_period %in% averaging_periods)
 
   # grid-cell size
   if (var %in% WOA23) {

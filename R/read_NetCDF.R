@@ -39,7 +39,7 @@ read_netCDF <- function(conn, var) {
 
   # make connection
   nc <- RNetCDF::open.nc(conn)
-
+  #nc <- RNetCDF::open.nc("https://www.ncei.noaa.gov/thredds-ocean/dodsC/woa23/DATA/temperature/netcdf/decav91C0/1.00/woa23_decav91C0_t08_01.nc")
   # variable
   lat <- RNetCDF::var.get.nc(nc, "lat")
   lon <- RNetCDF::var.get.nc(nc, "lon")

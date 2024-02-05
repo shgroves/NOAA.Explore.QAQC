@@ -2,7 +2,6 @@
 
 download_SHIP_CTD_data <- function(expeditions, path, data_inventory, data_downloaded = "NULL") {
 
-  x <- data_inventory
 
 
   # Section I - download profile data file for each cruise
@@ -54,9 +53,9 @@ download_SHIP_CTD_data <- function(expeditions, path, data_inventory, data_downl
       p$Expedition <- i
 
       # QAQC the folder structure for consistency - is the first sub-folder called "Profile_Data"?
-      #print(paste("Is the first folder in the EX", i,  "directory? called 'Profile_Data'?"))
+      print(paste("Is the first folder in the EX", i,  "directory? called 'Profile_Data'?"))
       tmp<- dir.exists(paste0(dest_dir, "EX", i, "-profile-data/Profile_Data"))
-      #print(tmp)
+      print(tmp)
 
 
       p$Profile_Data <- tmp
@@ -64,9 +63,9 @@ download_SHIP_CTD_data <- function(expeditions, path, data_inventory, data_downl
       if(p$Profile_Data == TRUE){
 
         # QAQC the folder structure for consistency - is there a subfolder called "SHIPCTD"?
-        #print(paste("Is there a subfolder called 'SHIPCTD'in the EX", i, "'Profile_Data' folder?"))
+        print(paste("Is there a subfolder called 'SHIPCTD'in the EX", i, "'Profile_Data' folder?"))
         tmp<-dir.exists(paste0(dest_dir, "EX", i, "-profile-data/Profile_Data/SHIPCTD"))
-        #print(tmp)
+        print(tmp)
 
         p$SHIPCTD <- tmp
 
@@ -87,9 +86,9 @@ download_SHIP_CTD_data <- function(expeditions, path, data_inventory, data_downl
       if(p$Profile_Data == FALSE) {
 
         # QAQC the folder structure for consistency - is the first sub-folder called "CTD"?
-        #print(paste("Is the first folder in the EX", i,  "directory? called 'CTD'?"))
+        print(paste("Is the first folder in the EX", i,  "directory? called 'CTD'?"))
         tmp<- dir.exists(paste0(dest_dir, "EX", i, "-profile-data/CTD"))
-        #print(tmp)
+        print(tmp)
 
 
         p$CTD <- tmp
@@ -98,9 +97,9 @@ download_SHIP_CTD_data <- function(expeditions, path, data_inventory, data_downl
         if(p$CTD == TRUE){
 
           # QAQC the folder structure for consistency - is there a subfolder called "SHIPCTD"?
-          #print(paste("Is there a subfolder called 'SHIPCTD'in the EX", i, "CTD' folder?"))
+          print(paste("Is there a subfolder called 'SHIPCTD'in the EX", i, "CTD' folder?"))
           tmp<-dir.exists(paste0(dest_dir, "EX", i, "-profile-data/CTD/SHIPCTD"))
-          #print(tmp)
+          print(tmp)
 
           p$SHIPCTD <- tmp
 

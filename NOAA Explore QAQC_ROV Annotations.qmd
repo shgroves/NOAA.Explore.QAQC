@@ -1,0 +1,313 @@
+---
+title: "NOAA Explore QAQC - ROV Annotations"
+author: "S. Groves"
+date: "`r Sys.Date()`"
+format: 
+  html:
+    toc: true
+    toc-location: left
+    code-fold: true
+    theme: united
+editor: visual
+---
+
+```{r}
+#| echo: false
+#| warning: false
+
+# Load libraries
+library(NOAA.Explore.QAQC) 
+library(ggplot2)
+library(plotly)
+library(magrittr)
+library(DT)
+library(tidyverse)
+library(ggpubr)
+
+# Source functions for now
+
+source("C:/Users/sarah.groves/Documents/R_packages/NOAA.Explore.QAQC/R/download_SHIP_CTD_data.R")
+#source("C:/Users/sarah.groves/Documents/R_packages/NOAA.Explore.QAQC/R/count_SHIP_CTD_files.R")
+source("C:/Users/sarah.groves/Documents/R_packages/NOAA.Explore.QAQC/R/theme_SHIP_CTD.R")
+#source("C:/Users/sarah.groves/Documents/R_packages/NOAA.Explore.QAQC/R/extract_NOAA_WOA.R")
+#source("C:/Users/sarah.groves/Documents/R_packages/NOAA.Explore.QAQC/R/get_NOAA_WOA_data.R")
+
+```
+
+```{r}
+#| echo: false
+#| warning: false
+
+#Read data inventory google sheets data into R
+ASPIRE_dat <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/19jRXe7SeDQRjv-guH2po5xTHqfzfeicDzZ74cb3OnNY/edit?pli=1#gid=0',
+                                        .name_repair = "universal") 
+
+ASPIRE_dat <- ASPIRE_dat %>%
+  dplyr::filter(Vessel == "NOAA Ship Okeanos Explorer",
+                ROV.Dives..0.1. > 0)
+
+# Pull some info from the data inventory
+
+campaign <- unique(ASPIRE_dat$Campaign)
+
+#platform <- unique(ASPIRE_dat$Vessel)
+
+platform <- "Okeanos Explorer"
+
+sensor <- "ROV Annotations"
+
+regions <- unique(ASPIRE_dat$Region)
+
+start_year <- min(ASPIRE_dat$Calendar.Year)
+
+end_year <- max(ASPIRE_dat$Calendar.Year)
+
+# Create a list of all of the expeditions with ROV dives casts from ASPIRE data inventory - to do - pull this directly from ASPIRE_dat
+expeditions <- ASPIRE_dat$Cruise.ID
+
+
+```
+
+```{r}
+#| echo: false
+#| warning: false
+
+# Load data and add to R package
+
+ASPIRE_ROV_BIOPHYS_data <- clean_annotations() # Something in the WoRMS function is causing an error
+
+#ASPIRE_ROV_BIOPHYS_data <- all_rov_clean
+
+load("data/ASPIRE_ROV_BIOPHYS_data.rda")
+
+#usethis::use_data(ASPIRE_ROV_BIOPHYS_data, overwrite = T)
+
+```
+
+[![](images/ocean-exploration-logo-360.png){fig-align="right"}](https://oceanexplorer.noaa.gov/)
+
+# Introduction
+
+**The purpose of this document is to consolidate and review the `r sensor` data collected during the `r campaign` campaign. In Step 1, the data are manually downloaded from SeaTube by entering each campaign number (EX1806, EX2206, etc.) Data are cleaned and reformatted using the clean_annotations.R script in the [NOAA.Explore.QAQC R package](https://github.com/shgroves/NOAA.Explore.QAQC).**
+
+The `r campaign` campaign was conducted from `r start_year` to `r end_year`. The information presented here is from `r platform` `r sensor` data collected in the following regions: `r regions`.
+
+## Taking a look at the data straight out of SeaTube
+
+```{r}
+
+dat <- read.csv("C:/Users/sarah.groves/Documents/Data/Seatube/SeaTubeAnnotations_10_16_2023.csv") |>
+  dplyr::bind_rows(read.csv("C:/Users/sarah.groves/Documents/Data/Seatube/SeaTubeAnnotations_EX1904_EX2202_12_4_2023.csv"))
+
+dat_raw <-  dat |>
+  dplyr::select(-(19:42)) |>
+  # Clean out column names in dataframe, conveniently, if you do this for 1 it gets rid of all
+  dplyr::filter(Cruise.Name != "Cruise Name") |>
+  dplyr::mutate(annotation_type = dplyr::case_when(
+    Taxonomy == "WoRDSS" ~ "biological",
+    Taxonomy == "WoRMS" ~ "biological",
+    Taxonomy == "Simplified CMECS" ~ "substrate",
+    Taxonomy == "CMECS" ~ "substrate",
+    Taxonomy == "Video Quality" ~ "video quality",
+    Taxonomy == "OER Education " ~ "education",
+    Taxonomy == "Education" ~ "education",
+    Taxonomy == "Underwater Cultural Heritage" ~ "UHC (restricted)",
+    Taxonomy == "OER Archaeology" ~ "UHC (restricted)",
+    grepl("delete|deleted", Comment, ignore.case = TRUE) ~ "to be deleted", TRUE ~ "other"),
+    uncertainty = dplyr::case_when(grepl("?", Comment, fixed = TRUE) ~ 1, TRUE ~ 0),
+    needs_review = dplyr::case_when(To.Be.Reviewed == "true" ~ 1, TRUE ~ 0)) |>
+  
+  dplyr::group_by(Cruise.Name, annotation_type) |>
+  dplyr::summarise(`n annotations` = length(unique(Annotation.ID)),
+                   `contains ?` = sum(uncertainty),
+                   `to be reviewed` = sum(needs_review)) |>
+  dplyr::ungroup() |>
+  dplyr::mutate(Cruise_Name = Cruise.Name,
+                `total annotations` = sum(`n annotations`),
+                `n annotations (%)` = round(`n annotations`/`total annotations`*100, 2),
+                `contains ? (%)` = round(`contains ?`/`n annotations`*100, 2),
+                `to be reviewed (%)` = round(`to be reviewed`/`n annotations`*100, 2),
+                `data type` = "raw") |>
+  dplyr::select(Cruise_Name, annotation_type, `n annotations`, `n annotations (%)`, `contains ?`, `contains ? (%)`, `to be reviewed`, `to be reviewed (%)`, `total annotations`, `data type`)
+
+
+
+dat_clean <- ASPIRE_ROV_BIOPHYS_data |>
+  dplyr::mutate(uncertainty = dplyr::case_when(grepl("?", Comment, fixed = TRUE) ~ 1, TRUE ~ 0),
+                needs_review = dplyr::case_when(To_Be_Reviewed == "true" ~ 1, TRUE ~ 0)) |>
+  dplyr::group_by(Cruise_Name, annotation_type) |>
+  dplyr::summarise(`n annotations` = length(unique(Annotation_ID)),
+                   `contains ?` = sum(uncertainty),
+                   `to be reviewed` = sum(needs_review)) |>
+  dplyr::ungroup() |>
+  dplyr::mutate(`total annotations` = sum(`n annotations`),
+                `n annotations (%)` = round(`n annotations`/`total annotations`*100, 2),
+                `contains ? (%)` = round(`contains ?`/`n annotations`*100, 2),
+                `to be reviewed (%)` = round(`to be reviewed`/`n annotations`*100, 2),
+                `data type` = "clean") |>
+  dplyr::select(Cruise_Name, annotation_type, `n annotations`, `n annotations (%)`, `contains ?`, `contains ? (%)`, `to be reviewed`, `to be reviewed (%)`, `total annotations`, `data type`) |>
+  dplyr::mutate(annotation_type = dplyr::recode(annotation_type, UHC_restricted = "UHC (restricted)",
+                                                to_be_deleted = "to be deleted",
+                                                video_quality = "video quality",
+                                                test_annotation = "test annotation",
+                                                gas_seep = "gas seep",
+                                                biological_behavior = "biological behavior"))
+
+dat_combo <- dplyr::bind_rows(dat_raw, dat_clean) |>
+  dplyr::mutate(`good annotations` = `n annotations` - `contains ?` - `to be reviewed`) |>
+  dplyr::select(Cruise_Name, annotation_type, `good annotations`, `contains ?`, `to be reviewed`, `data type`) |>
+  tidyr::pivot_longer(cols = c("good annotations", "contains ?", "to be reviewed"), names_to = "annotation quality", values_to = "annotations")
+
+cruise <- unique(dat_combo$Cruise_Name)
+
+for(i in cruise){
+plot <- ggplot(dat_combo |> dplyr::filter(Cruise_Name == i), aes(x = `data type`, y = `annotations`,  fill = `annotation quality`)) + 
+  geom_bar(stat = 'identity', position = 'stack') + 
+  facet_wrap(~annotation_type, nrow = 1) +
+  ggtitle(i)
+
+print(plot)
+}
+
+DT::datatable(dat_combo)
+
+```
+
+# Step 1
+
+## Compare with `r campaign` data inventory
+
+```{r}
+#| echo: false
+#| warning: false
+
+# Summarize annotation data
+
+dat_sum <- ASPIRE_ROV_BIOPHYS_data |>
+  dplyr::group_by(cruise) |>
+  dplyr::summarise(N_dives = length(unique(dive_number)))
+
+
+```
+
+## Dives successful (depth \> 50m)
+
+```{r}
+#| echo: false
+#| warning: false
+
+# Summarize annotation data
+
+dat_test_ann <- ASPIRE_ROV_BIOPHYS_data |>
+  dplyr::filter(dive_number == "test" ) |>
+  dplyr::filter(annotation_type == "biological") |>
+  dplyr::group_by(cruise) |>
+  dplyr::summarise(`test dive annotations (n)` = sum(length(unique(Annotation_ID))))
+
+
+```
+
+## Test dives saved
+
+```{r}
+#| echo: false
+#| warning: false
+
+# Summarize annotation data
+
+dat_test <- ASPIRE_ROV_BIOPHYS_data |>
+  dplyr::filter(dive_number == "test" ) |>
+  dplyr::group_by(cruise) |>
+  dplyr::summarise(`test dive (Y/N)` = "Y")
+
+
+```
+
+## Test dives with annotations
+
+```{r}
+#| echo: false
+#| warning: false
+
+# Summarize annotation data
+
+dat_test_ann <- ASPIRE_ROV_BIOPHYS_data |>
+  dplyr::filter(dive_number == "test" ) |>
+  dplyr::filter(annotation_type == "biological") |>
+  dplyr::group_by(cruise) |>
+  dplyr::summarise(`test dive annotations (n)` = sum(length(unique(Annotation_ID))))
+
+
+```
+
+## Dives with coral & sponges
+
+```{r}
+#| echo: false
+#| warning: false
+
+# Summarize annotation data
+
+dat_test_corspo <- ASPIRE_ROV_BIOPHYS_data |>
+  dplyr::filter(dive_number != "test" ) |>
+  dplyr::filter(Class == "Anthozoa" | Phylum == "Porifera") |>
+  dplyr::group_by(cruise) |>
+  dplyr::summarise(`Dives with Coral/Sponges` = sum(length(unique(Dive_ID))),
+                   `N annotations Coral/Sponges` = sum(length(unique(Annotation_ID))))
+
+
+```
+
+## Dives with Chemo/Seeps
+
+```{r}
+#| echo: false
+#| warning: false
+
+# Summarize annotation data
+
+dat_seeps <- ASPIRE_ROV_BIOPHYS_data |>
+  dplyr::filter(dive_number != "test" ) |>
+  dplyr::filter(annotation_type == "gas_seep") |>
+  dplyr::group_by(cruise) |>
+  dplyr::summarise(`gas seeps (n)` = sum(length(unique(Annotation_ID))))
+
+
+```
+
+## ROV Depth Max (m)
+
+```{r}
+#| echo: false
+#| warning: false
+
+# Summarize annotation data
+
+dat_depth <- ASPIRE_ROV_BIOPHYS_data |>
+  dplyr::group_by(cruise) |>
+  dplyr::summarise(`ROV mean depth (m)` = mean(ROV1_depth_m, na.rm = T),
+                   `ROV min depth (m)` = min(ROV1_depth_m, na.rm = T),
+                   `ROV max depth (m)` = max(ROV1_depth_m, na.rm = T))
+
+
+```
+
+# Step 2
+
+## Check for unverified or "to be deleted" annotations
+
+# Step 3
+
+## Check for missing latitude and longitude
+
+## Check for UHC data
+
+## Dives missing sensor data
+
+# Step 4
+
+## Check for missing sensor data
+
+# Step 5
+
+## Mid-water dives check
