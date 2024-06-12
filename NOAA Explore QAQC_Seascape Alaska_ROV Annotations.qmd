@@ -1,0 +1,207 @@
+---
+title: "EX2306 Event Logs vs Subject Matter Expert QAQC Comparison"
+format:
+  html:
+    embed-resources: true
+    code-background: true
+editor: visual
+execute:
+  warning: false
+  echo: false
+  cache: true
+---
+
+# Introduction
+
+#### The purpose of this document is to compare the Event Logs for EX2306 with the Subject Matter Expert (SME) QAQC'd dataset provided by the DARC Lab at UH Manoa. A total of 1627 observations were made during the dive while 32,507 were created by the DARC lab. The tables and figures below demonstrate how this breaks down by individual dive and by dive and taxa. Note Dive 16 was not completed due to high turbidity and no annotations were created (Candio et al. *in prep*).
+
+```{r}
+# Load libraries
+library(NOAA.Explore.QAQC) 
+library(ggplot2)
+library(plotly)
+library(magrittr)
+library(DT)
+library(tidyverse)
+library(ggpubr)
+#remotes::install_github("KarstensLab/microshades", dependencies = TRUE)
+library(microshades)
+
+# mdf_prep <- GlobalPatterns %>%
+#         tax_glom("Genus") %>%
+#         phyloseq::transform_sample_counts(function(x) { x/sum(x) }) %>%
+#         psmelt() %>%
+#         filter(Abundance > 0)
+# 
+# color_objs_GP <- create_color_dfs(mdf_prep,
+#                                   selected_groups = 
+#                                     c("Verrucomicrobia", "Proteobacteria", "Actinobacteria", "Bacteroidetes",
+#                                       "Firmicutes") , 
+#                                   cvd = TRUE)
+# 
+# mdf_GP <- color_objs_GP$mdf
+# cdf_GP <- color_objs_GP$cdf
+```
+
+```{r}
+
+#| echo: false
+
+clean <- read.delim("~/Data/EX2306/SME_clean/EX2306_Survey_Data_20240528.txt") |>
+  dplyr::select(SampleID, ScientificName, TaxonRank, 11:20, MaximumDepthInMeters, ObservationDate, ObservationTime, SurveyID, Station) |>
+  dplyr::filter(!is.na(ScientificName)) |>
+  dplyr::mutate(data_type = "SME_QAQC",
+                TaxonRank = dplyr::case_when(ScientificName == "Animalia" ~ "Kingdom", TRUE ~ TaxonRank)) |> 
+  dplyr::mutate(Dive = paste0(SurveyID, "_Dive", sub('.+-(.+)', '\\1', Station)))
+
+# write.csv(rov_dat_by_taxa, "~/Data/EX2306/Summary/EX2306_annotations_by_taxa.csv", row.names = F)
+
+# Create of all the TaxonRanks in the clean data to pull from the raw data below
+TaxonRank <- unique(clean$TaxonRank)
+
+```
+
+```{r}
+#| echo: false
+#| warning: false
+
+df <- list.files(path="~/Data/EX2306/Raw/", full.names = TRUE) |>
+  lapply(read_csv, skip=2, show_col_types = FALSE) |> 
+  #lapply(function(d) d[-2,-1]) |>  
+  bind_rows() 
+
+
+raw <- df|>
+  # filter out just the bio annotations
+  dplyr::filter(Taxonomy == "WoRMS") |>
+  # select columns & add data type
+  dplyr::select('Dive ID', 'Dive Name', 'Start Date', Taxon, 'Taxon Path', 'Annotation ID', all_of(TaxonRank)) |>
+  dplyr::mutate(data_type = "Event_log",
+                ScientificName = Taxon) |>
+  # Pivot to long & add TaxonRank column
+  tidyr::pivot_longer(cols = c(TaxonRank), names_to = "TaxonRank", values_to = "Taxon2") |>
+  # We only want the lowest taxonomic rank, so first, filter out the NAs
+  dplyr::filter(!is.na(Taxon2)) |>
+  #Then select only the rows where Taxon and Taxon2 and equal
+  dplyr::filter(Taxon == Taxon2) |> 
+  dplyr::mutate(Dive = sub(" .*", "", `Dive Name`)) |>
+  dplyr::select(-Taxon, -Taxon2)
+
+# Confirm this worked by looking at the number of annotations IDs, should match number of rows
+#length(unique(raw$`Annotation ID`))
+```
+
+```{r}
+
+#| echo: false
+
+rov_dat_by_dive <- dplyr::bind_rows(clean |> dplyr::select(Dive, data_type, TaxonRank), raw |> dplyr::select(Dive, data_type, TaxonRank)) |>
+  dplyr::group_by(Dive, data_type) |>
+  dplyr::summarise(n_obs = length(TaxonRank), .groups="drop") |>
+  # Add in 0 for one dive with no observations - this looks nicer when you plot it
+  tidyr::pivot_wider(names_from = data_type, values_from = n_obs) |>
+  dplyr::mutate_if(is.numeric, ~replace_na(., 0)) |>
+  tidyr::pivot_longer(cols = c(2:3), names_to = "data_type", values_to = "n_obs") 
+
+# write.csv(rov_dat_by_dive, "~/Data/EX2306/Summary/EX2306_annotations_by_dive.csv", row.names = F)
+
+rov_dat_by_taxa <- dplyr::bind_rows(clean |> dplyr::select(Dive, data_type, TaxonRank), raw |> dplyr::select(Dive, data_type, TaxonRank)) |>
+  dplyr::group_by(Dive, data_type, TaxonRank) |>
+  dplyr::summarise(n_obs = length(TaxonRank), .groups="drop") |>
+  # Add in 0 for taxa with no observations - this looks nicer when you plot it
+  tidyr::pivot_wider(names_from = TaxonRank, values_from = n_obs) |>
+  dplyr::mutate_if(is.numeric, ~replace_na(., 0)) |>
+  tidyr::pivot_longer(cols = c(3:20), names_to = "TaxonRank", values_to = "n_obs") 
+
+rov_dat_by_taxa_grp <- dplyr::bind_rows(clean |> dplyr::select(Dive, data_type, TaxonRank, ScientificName), raw |> dplyr::select(Dive, data_type, TaxonRank, ScientificName)) |>
+  dplyr::group_by(Dive, data_type, TaxonRank, ScientificName) |>
+  dplyr::summarise(n_obs = length(TaxonRank), .groups="drop") 
+
+
+# write.csv(rov_dat_by_taxa, "~/Data/EX2306/Summary/EX2306_annotations_by_taxa.csv", row.names = F)
+
+
+```
+
+```{r}
+DT::datatable(rov_dat_by_dive, caption = "Table 1: Comparison of biological observations created by real-time annotations (Event_log) and the DARC lab QAQC process (SME_QAQC) for each dive conducted during EX2306")
+
+```
+
+#### Figures 1-18: Total number of biological observations created by real-time annotations (Event_log) and the DARC lab QAQC process (SME_QAQC) for each dive conducted during EX2306. Note the scales on the Y axis are variable by dive.
+
+```{r}
+
+dives <- unique(rov_dat_by_dive$Dive)
+
+for(i in dives){
+  plot <- ggplot(rov_dat_by_dive |> dplyr::filter(Dive == i), aes(x = data_type, y = n_obs), group = data_type) + 
+    geom_bar(stat = "identity") +
+    labs(x = "Data type", y = "Biological annotations") +
+    ggtitle(i)
+  
+  print(plot)
+}
+
+```
+
+```{r}
+DT::datatable(rov_dat_by_taxa, caption = "Table 2: Comparison of biological observations created by real-time annotations (Event_log) and the DARC lab QAQC process (SME_QAQC) by taxa for each dive conducted during EX2306")
+
+```
+
+#### Figures 19-36: Total number of biological observations created by real-time annotations (Event_log) and the DARC lab QAQC process (SME_QAQC) by taxa for each dive conducted during EX2306.
+
+```{r}
+
+# Change TaxonRank to a factor and put it in order
+
+rov_dat_by_taxa$TaxonRank <- factor(rov_dat_by_taxa$TaxonRank, levels=c("Kingdom","Phylum", "Subphylum", "Gigaclass", "Superclass", "Class", "Infraclass", "Subclass", "Superorder", "Order", "Suborder" , "Infraorder", "Superfamily", "Family", "Subfamily", "Genus", "Species", "Subspecies"))
+
+for(i in dives){
+  plot <- ggplot(rov_dat_by_taxa |> dplyr::filter(Dive == i), aes(x = TaxonRank, y = n_obs, fill = data_type)) + 
+    geom_bar(stat = "identity", position="dodge") +
+    ggtitle(i) +
+    labs(x = "Taxa", y = "Biological annotations") +
+    theme(axis.text.x = element_text(angle = -90, vjust = 0, hjust=0))
+  
+  print(plot)
+}
+```
+
+```{r}
+# Make individual plots by Taxon Rank to make legends
+# 
+# color_objs_GP <- microshades::create_color_dfs(rov_dat_by_taxa_grp,
+#                                                selected_groups = 
+#                                                  c("Kingdom","Phylum", "Subphylum", "Gigaclass", "Superclass", "Class", "Infraclass", "Subclass", "Superorder", "Order", "Suborder" , "Infraorder", "Superfamily", "Family", "Subfamily", "Genus", "Species", "Subspecies"), 
+#                                                cvd = TRUE)
+# 
+# 
+
+```
+
+#### Figures 37-54: Total number of biological observations created by real-time annotations (Event_log) and the DARC lab QAQC process (SME_QAQC) by taxa for each dive conducted during EX2306. Unique colors represent the diversity of taxa within a given taxonomic level. For example, every unique color in the genus bar represents an indivudal genus identified. Legend is not shown because it is too large. A total of 748 unique taxa were identified on this expedition.
+
+```{r}
+
+# Change TaxonRank to a factor and put it in order
+
+rov_dat_by_taxa_grp$TaxonRank <- factor(rov_dat_by_taxa_grp$TaxonRank, levels=c("Kingdom","Phylum", "Subphylum", "Gigaclass", "Superclass", "Class", "Infraclass", "Subclass", "Superorder", "Order", "Suborder" , "Infraorder", "Superfamily", "Family", "Subfamily", "Genus", "Species", "Subspecies"))
+
+for(i in dives){
+  plot <- ggplot(rov_dat_by_taxa_grp |> dplyr::filter(Dive == i), aes(x = data_type, y = n_obs, fill = ScientificName)) + 
+    geom_bar(position = "stack",
+             stat = "identity") +
+    facet_grid(~ TaxonRank, switch = "x") +
+    ggtitle(i) +
+    labs(x = "Taxa and data type", y = "Biological annotations") +
+    theme(axis.text.x = element_text(angle = -90, vjust = 0, hjust=0),
+          legend.position = "none",
+          strip.placement = "outside",
+          strip.background = element_rect(fill = NA, color = "white"),
+          panel.spacing = unit(-.01,"cm"))
+  
+  print(plot)
+}
+```

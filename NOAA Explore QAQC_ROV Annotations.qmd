@@ -44,7 +44,10 @@ ASPIRE_dat <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/
 
 ASPIRE_dat <- ASPIRE_dat %>%
   dplyr::filter(Vessel == "NOAA Ship Okeanos Explorer",
-                ROV.Dives..0.1. > 0)
+                ROV.Dives..0.1. > 0) |>
+  dplyr::mutate(Cruise.ID = dplyr::recode(Cruise.ID,
+                                           "EX1903L2" = "EX1903",
+                                           "EX1905L2" = "EX1905"))
 
 # Pull some info from the data inventory
 
@@ -69,12 +72,26 @@ expeditions <- ASPIRE_dat$Cruise.ID
 ```
 
 ```{r}
+
+EE_metrics <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1hZign1cooU2e0u1W_8MoMEijj7XLQcN-RSnk_mmixEU/edit#gid=0', .name_repair = "universal")  |>
+  dplyr::select(2:24,99:114, 128:130, 137:148) |>
+  dplyr::filter(Vessel == "NOAAS Okeanos Explorer",
+                Campaign == "ASPIRE", 
+                Dives.Attempted > 0) |>
+  dplyr::mutate(Cruise.ID = dplyr::recode(Cruise.ID,
+                                           "EX1903L2" = "EX1903",
+                                           "EX1905L2" = "EX1905"))
+
+
+```
+
+```{r}
 #| echo: false
 #| warning: false
 
 # Load data and add to R package
 
-ASPIRE_ROV_BIOPHYS_data <- clean_annotations() # Something in the WoRMS function is causing an error
+#ASPIRE_ROV_BIOPHYS_data <- clean_annotations() # Something in the WoRMS function is causing an error
 
 #ASPIRE_ROV_BIOPHYS_data <- all_rov_clean
 
@@ -185,9 +202,13 @@ DT::datatable(dat_combo)
 
 dat_sum <- ASPIRE_ROV_BIOPHYS_data |>
   dplyr::group_by(cruise) |>
-  dplyr::summarise(N_dives = length(unique(dive_number)))
+  dplyr::summarise(N_dives_data = length(unique(dive_number))) |>
+  dplyr::left_join(ASPIRE_dat |> dplyr::select(1, 44), by = c("cruise" = "Cruise.ID")) |>
+  dplyr::mutate(N_dives_EE = Dives..Successful..calculation.) |>
+  dplyr::select(cruise,N_dives_data,N_dives_EE) |>
+  dplyr::mutate(Pass_QC = dplyr::case_when(N_dives_data == N_dives_EE ~ "Yes", TRUE ~"No"))
 
-
+DT::datatable(dat_sum)
 ```
 
 ## Dives successful (depth \> 50m)

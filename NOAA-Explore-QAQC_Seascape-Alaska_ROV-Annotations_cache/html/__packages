@@ -1,0 +1,16 @@
+NOAA.Explore.QAQC
+ggplot2
+plotly
+magrittr
+DT
+tidyverse
+tibble
+tidyr
+readr
+purrr
+dplyr
+stringr
+forcats
+lubridate
+ggpubr
+microshades
