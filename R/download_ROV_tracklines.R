@@ -1,6 +1,6 @@
 
 
-download_ROV_tracklines <- function(expeditions, dive, path, data_inventory, data_downloaded = "NULL") {
+download_ROV_tracklines <- function(expeditions, data, data_location, data_downloaded = "NULL") {
 
 
 
@@ -10,42 +10,99 @@ download_ROV_tracklines <- function(expeditions, dive, path, data_inventory, dat
      data_downloaded == F ||
      data_downloaded == "NULL"){
 
-    for(i in expeditions) {
+    if(data_location == "DLP") {
 
-      dat <- data_inventory |> dplyr::filter(cruise == i)
+      for(i in expeditions) {
 
-      dives <- unique(dat$dive)
+        dat <- data |> dplyr::filter(expedition == i)
 
-      for(j in expeditions) {
+        dives <- unique(dat$Dive)
 
-      # URL of the file to be downloaded
+        for(j in dives) {
 
-      url <- paste0("https://oer.hpc.msstate.edu/okeanos/ex", i, "/ex", i, "-DIVE", j, "-ancillary-data.zip")
+          # URL of the file to be downloaded
 
-      # Destination directory to save the downloaded file
-      dest_dir <- "C:/Users/sarah.groves/Documents/Data/ROV_tracks/"
+          url <- paste0("https://oer.hpc.msstate.edu/okeanos/", i, "/", i, "-DIVE0", j, "-ancillary-data.zip")
 
-      # Download the file using download.file()
-      download.file(url, destfile = paste0(dest_dir, "ex", i, "-DIVE", j, "-ancillary-data.zip"), cacheOK = F, quiet = FALSE)
+          #https://oer.hpc.msstate.edu/okeanos/ex1711/ex1711-DIVE01-ancillary-data.zip
+          #https://oer.hpc.msstate.edu/okeanos/ex1711/ex1711-DIVE01-ancillary-data.zip
+          # Destination directory to save the downloaded file
+          dest_dir <- "C:/Users/sarah.groves/Documents/Data/ROV_tracks/"
 
-      #Create a new folder in the path provided (dest_dir) based on the expedition name
+          # Download the file using download.file()
+          download.file(url, destfile = paste0(dest_dir, i, "-DIVE", j, "-ancillary-data.zip"), cacheOK = F, quiet = FALSE)
 
-      dir.create(paste0(dest_dir, "EX", i, "-profile-data"))
+          #Create a new folder in the path provided (dest_dir) based on the expedition name
 
-      # Unzip the downloaded file
-      unzip(paste0(dest_dir, "ex", i, "-DIVE", j, "-ancillary-data.zip"), exdir = paste0(dest_dir, "EX", i, "DIVE", j, "-ancillary-data.zip"))
+          dir.create(paste0(dest_dir, "EX", i, "-profile-data"))
 
-      # Delete the downloaded .zip file
-      file.remove(paste0(dest_dir, "ex", i, "-profile-data.zip"))
+          # Unzip the downloaded file
+          unzip(paste0(dest_dir, "ex", i, "-DIVE", j, "-ancillary-data.zip"), exdir = paste0(dest_dir, "EX", i, "DIVE", j, "-ancillary-data.zip"))
+
+          # Delete the downloaded .zip file
+          file.remove(paste0(dest_dir, "ex", i, "-profile-data.zip"))
+
+        }
 
       }
 
     }
 
-  }
 
 
-}
+    if(data_location == "GFOE") {
+
+      for(i in expeditions) {
+
+        dat <- data |> dplyr::filter(expedition == i)
+
+        dives <- unique(dat$Dive)
+
+        for(j in dives) {
+
+          dat2 <- data |> dplyr::filter(Dive == j)
+
+          # Pull out the year month and day bc GFOE put the date in the file path (yay!)
+          year <- unique(lubridate::year(lubridate::mdy(dat2$ObservationDate)))
+          month <- paste0("0", unique(lubridate::month(lubridate::mdy(dat2$ObservationDate))))
+          day <- first(unique(lubridate::day(lubridate::mdy(dat2$ObservationDate))))
+
+          if(day >= 10){
+            day <- day
+          }else{
+            day <- paste0("0", day)
+          }
+
+          # URL of the file to be downloaded
+          ## ROV Text file
+          url <- paste0("https://sarahgroves:gfoeTHATCH1022!@exdata.tgfoe.org/OkeanosCruises/", i, "/Products/ROV/", toupper(j), "_", year, month, day, "/", toupper(j), ".txt")
+          ## Rov Track .csv
+          url2 <- paste0("https://sarahgroves:gfoeTHATCH1022!@exdata.tgfoe.org/OkeanosCruises/", i, "/Products/ROV/", toupper(j), "_", year, month, day, "/", toupper(j), "_RovTrack.csv")
+
+          # Destination directory to save the downloaded file
+          dest_dir <- "C:/Users/sarah.groves/Documents/Data/"
+
+          #Create a new folder in the path provided (dest_dir) for ROV data
+          dir.create(paste0(dest_dir, i, "/ROV_data"))
+
+          # Download the file using download.file()
+          download.file(url, destfile = paste0(dest_dir, i, "/ROV_data/", j, ".txt"), cacheOK = F, quiet = FALSE)
+          download.file(url2, destfile = paste0(dest_dir, i, "/ROV_data/", j, "_RovTrack.csv"), cacheOK = F, quiet = FALSE)
+
+        }
+
+      }
+
+    }
+
+    if(is.null(data_location)) {print("Please specify a data location, either `DLP` for the Data Landing Pages or `GFOE` for the GFOE server.
+                                      Note GFOE server requires collaboration tools account and log in.")}
+
+
+
+  } # End data_download condition
+} # End function
+
 
 
 

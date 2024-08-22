@@ -24,37 +24,50 @@ library(magrittr)
 library(DT)
 library(tidyverse)
 library(ggpubr)
-#remotes::install_github("KarstensLab/microshades", dependencies = TRUE)
-library(microshades)
 
-# mdf_prep <- GlobalPatterns %>%
-#         tax_glom("Genus") %>%
-#         phyloseq::transform_sample_counts(function(x) { x/sum(x) }) %>%
-#         psmelt() %>%
-#         filter(Abundance > 0)
-# 
-# color_objs_GP <- create_color_dfs(mdf_prep,
-#                                   selected_groups = 
-#                                     c("Verrucomicrobia", "Proteobacteria", "Actinobacteria", "Bacteroidetes",
-#                                       "Firmicutes") , 
-#                                   cvd = TRUE)
-# 
-# mdf_GP <- color_objs_GP$mdf
-# cdf_GP <- color_objs_GP$cdf
+source("C:/Users/sarah.groves/Documents/R_packages/NOAA.Explore.QAQC/R/download_ROV_tracklines.R")
+
+```
+
+# Select the expedition
+```{r}
+
+expedition <- "EX2306"
+
+#expedition <- "EX2304"
 ```
 
 ```{r}
 
 #| echo: false
 
+if(expedition == "EX2306") {
+
 clean <- read.delim("~/Data/EX2306/SME_clean/EX2306_Survey_Data_20240528.txt") |>
-  dplyr::select(SampleID, ScientificName, TaxonRank, 11:20, MaximumDepthInMeters, ObservationDate, ObservationTime, SurveyID, Station) |>
+  dplyr::select(SampleID, ScientificName, TaxonRank, 11:20, MaximumDepthInMeters, ObservationDate, ObservationTime, SurveyID, Station, IndividualCount, CategoricalAbundance) |>
   dplyr::filter(!is.na(ScientificName)) |>
   dplyr::mutate(data_type = "SME_QAQC",
                 TaxonRank = dplyr::case_when(ScientificName == "Animalia" ~ "Kingdom", TRUE ~ TaxonRank)) |> 
-  dplyr::mutate(Dive = paste0(SurveyID, "_Dive", sub('.+-(.+)', '\\1', Station)))
+  dplyr::mutate(Dive = paste0(SurveyID, "_Dive", sub('.+-(.+)', '\\1', Station)),
+                Expedition = "EX2306")
 
 # write.csv(rov_dat_by_taxa, "~/Data/EX2306/Summary/EX2306_annotations_by_taxa.csv", row.names = F)
+
+}
+
+if(expedition == "EX2304") {
+
+clean <- read.delim("~/Data/EX2304/SME_clean/EX2304_ROV_Animal_Data.txt") |>
+  dplyr::select(SampleID, ScientificName, TaxonRank, 11:20, MaximumDepthInMeters, ObservationDate, ObservationTime, SurveyID, Station, IndividualCount, CategoricalAbundance) |>
+  dplyr::filter(!is.na(ScientificName)) |>
+  dplyr::mutate(data_type = "SME_QAQC",
+                TaxonRank = dplyr::case_when(ScientificName == "Animalia" ~ "Kingdom", TRUE ~ TaxonRank)) |> 
+  dplyr::mutate(Dive = paste0(SurveyID, "_Dive", sub('.+-(.+)', '\\1', Station)),
+                Expedition = "EX2304")
+
+# write.csv(rov_dat_by_taxa, "~/Data/EX2306/Summary/EX2306_annotations_by_taxa.csv", row.names = F)
+
+}
 
 # Create of all the TaxonRanks in the clean data to pull from the raw data below
 TaxonRank <- unique(clean$TaxonRank)
@@ -65,11 +78,12 @@ TaxonRank <- unique(clean$TaxonRank)
 #| echo: false
 #| warning: false
 
+if(expedition == "EX2306"){
+
 df <- list.files(path="~/Data/EX2306/Raw/", full.names = TRUE) |>
   lapply(read_csv, skip=2, show_col_types = FALSE) |> 
   #lapply(function(d) d[-2,-1]) |>  
   bind_rows() 
-
 
 raw <- df|>
   # filter out just the bio annotations
@@ -84,13 +98,77 @@ raw <- df|>
   dplyr::filter(!is.na(Taxon2)) |>
   #Then select only the rows where Taxon and Taxon2 and equal
   dplyr::filter(Taxon == Taxon2) |> 
-  dplyr::mutate(Dive = sub(" .*", "", `Dive Name`)) |>
+  dplyr::mutate(Dive = sub(" .*", "", `Dive Name`),
+                Expedition = "EX2306") |>
   dplyr::select(-Taxon, -Taxon2)
 
+}
+
+if(expedition == "EX2304"){
+ 
+df <- read_csv("~/Data/EX2304/Raw/SeaTubeAnnotations_EX2304_All_dives_08_14_24.csv") 
+  
+raw <- df|>
+  # filter out just the bio annotations
+  dplyr::filter(Taxonomy == "WoRMS") |>
+  # select columns & add data type
+  dplyr::select('Dive ID', 'Dive Name', 'Start Date', Taxon, 'Taxon Path', 'Annotation ID', all_of(TaxonRank)) |>
+  dplyr::mutate(data_type = "Event_log",
+                ScientificName = Taxon) |>
+  # Pivot to long & add TaxonRank column
+  tidyr::pivot_longer(cols = c(TaxonRank), names_to = "TaxonRank", values_to = "Taxon2") |>
+  # We only want the lowest taxonomic rank, so first, filter out the NAs
+  dplyr::filter(!is.na(Taxon2)) |>
+  #Then select only the rows where Taxon and Taxon2 and equal
+  dplyr::filter(Taxon == Taxon2) |> 
+  dplyr::mutate(Dive = sub(" .*", "", `Dive Name`)) |>
+  dplyr::mutate(Dive =gsub("DIVE","Dive", Dive),
+                Expedition = "EX2304") |>
+  dplyr::select(-Taxon, -Taxon2)
+
+}
 # Confirm this worked by looking at the number of annotations IDs, should match number of rows
 #length(unique(raw$`Annotation ID`))
 ```
 
+### Summarize data by expedition 
+```{r}
+
+#| echo: false
+
+rov_dat_by_ex <- dplyr::bind_rows(clean |> dplyr::select(Expedition, data_type, TaxonRank), raw |> dplyr::select(Expedition, data_type, TaxonRank)) |>
+  dplyr::group_by(Expedition, data_type) |>
+  dplyr::summarise(n_obs = length(TaxonRank), .groups="drop") |>
+  # Add in 0 for one dive with no observations - this looks nicer when you plot it
+  tidyr::pivot_wider(names_from = data_type, values_from = n_obs) |>
+  dplyr::mutate_if(is.numeric, ~replace_na(., 0)) |>
+  tidyr::pivot_longer(cols = c(2:3), names_to = "data_type", values_to = "n_obs") 
+
+# write.csv(rov_dat_by_dive, "~/Data/EX2306/Summary/EX2306_annotations_by_dive.csv", row.names = F)
+
+rov_dat_by_ex_taxa <- dplyr::bind_rows(clean |> dplyr::select(Expedition, data_type, TaxonRank), raw |> dplyr::select(Expedition, data_type, TaxonRank)) |>
+  dplyr::group_by(Expedition, data_type, TaxonRank) |>
+  dplyr::summarise(n_obs = length(TaxonRank), .groups="drop") |>
+  # Add in 0 for taxa with no observations - this looks nicer when you plot it
+  tidyr::pivot_wider(names_from = TaxonRank, values_from = n_obs) |>
+  dplyr::mutate_if(is.numeric, ~replace_na(., 0)) |>
+  tidyr::pivot_longer(cols = c(3:last_col()), names_to = "TaxonRank", values_to = "n_obs") 
+
+rov_dat_by_ex_taxa_grp <- dplyr::bind_rows(clean |> dplyr::select(Expedition, data_type, TaxonRank, ScientificName), raw |> dplyr::select(Expedition, data_type, TaxonRank, ScientificName)) |>
+  dplyr::group_by(Expedition, data_type, TaxonRank, ScientificName) |>
+  dplyr::summarise(n_obs = length(TaxonRank), .groups="drop") 
+
+Total_unique_taxa_ex <- dplyr::bind_rows(clean |> dplyr::select(Expedition, data_type, ScientificName), raw |> dplyr::select(Expedition, data_type, ScientificName)) |>
+  dplyr::group_by(Expedition, data_type) |>
+  dplyr::summarise(n_unique_obs = length(unique(ScientificName)), .groups="drop")
+
+
+# write.csv(Total_unique_taxa_ex, "~/Data/EX2306/Summary/EX2306_Total_unique_taxa.csv", row.names = F)
+
+
+```
+
+### Summarize data by dive
 ```{r}
 
 #| echo: false
@@ -105,15 +183,15 @@ rov_dat_by_dive <- dplyr::bind_rows(clean |> dplyr::select(Dive, data_type, Taxo
 
 # write.csv(rov_dat_by_dive, "~/Data/EX2306/Summary/EX2306_annotations_by_dive.csv", row.names = F)
 
-rov_dat_by_taxa <- dplyr::bind_rows(clean |> dplyr::select(Dive, data_type, TaxonRank), raw |> dplyr::select(Dive, data_type, TaxonRank)) |>
+rov_dat_by_dive_taxa <- dplyr::bind_rows(clean |> dplyr::select(Dive, data_type, TaxonRank), raw |> dplyr::select(Dive, data_type, TaxonRank)) |>
   dplyr::group_by(Dive, data_type, TaxonRank) |>
   dplyr::summarise(n_obs = length(TaxonRank), .groups="drop") |>
   # Add in 0 for taxa with no observations - this looks nicer when you plot it
   tidyr::pivot_wider(names_from = TaxonRank, values_from = n_obs) |>
   dplyr::mutate_if(is.numeric, ~replace_na(., 0)) |>
-  tidyr::pivot_longer(cols = c(3:20), names_to = "TaxonRank", values_to = "n_obs") 
+  tidyr::pivot_longer(cols = c(3:last_col()), names_to = "TaxonRank", values_to = "n_obs") 
 
-rov_dat_by_taxa_grp <- dplyr::bind_rows(clean |> dplyr::select(Dive, data_type, TaxonRank, ScientificName), raw |> dplyr::select(Dive, data_type, TaxonRank, ScientificName)) |>
+rov_dat_by_dive_taxa_grp <- dplyr::bind_rows(clean |> dplyr::select(Dive, data_type, TaxonRank, ScientificName), raw |> dplyr::select(Dive, data_type, TaxonRank, ScientificName)) |>
   dplyr::group_by(Dive, data_type, TaxonRank, ScientificName) |>
   dplyr::summarise(n_obs = length(TaxonRank), .groups="drop") 
 
@@ -205,3 +283,28 @@ for(i in dives){
   print(plot)
 }
 ```
+
+### Summarise the number of unique identifications at specified taxonomic levels
+```{r}
+
+clean_sum <- clean |>
+  dplyr::group_by(SurveyID) |>
+  dplyr::summarise(Order = length(unique(Order)), # Change (Order) to your taxon level of interest
+                   Genus = length(unique(Genus)),
+                   Species = length(unique(Species)),.groups="drop") 
+```
+
+# Calculate annotations per minute
+```{r}
+
+# Pull the entire ROV track from the Data Landing Page (DLP)
+
+download_ROV_tracklines(expeditions = expedition,
+                        data = clean,
+                        data_location = "GFOE",
+                        data_downloaded = "NULL")
+
+# Pull the text file from the DLP
+
+```
+
