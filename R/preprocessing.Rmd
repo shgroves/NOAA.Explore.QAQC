@@ -10,6 +10,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(sf)
 ```
 Subset dataset based on missing values in a given column
 Run a conditional “if” statement based on the number of rows that either
@@ -20,10 +23,22 @@ Creates a table with the rows that are missing
 # Subset dataset
 
 ```{r}
+setwd("~/NOAA/NOAA.Explore.QAQC/R")
 expedition = "EX2306_Survey_Data_20240528.csv"
-survey_df = read.csv(paste0("../data/",expedition))
+survey_df = read.csv(paste0("../../data/",expedition))
 # paste0: doesn't add seperators btw items else paste defaults to singel space
 # paste: can add optional delimiteers (sep = "_")
+```
+
+```{r}
+# Column Options
+colnames(survey_df)
+```
+
+```{r}
+### Data Cleaning ###
+# filter function for missing / unexpected values
+
 
 filter_df <- function(df, col = NA, filter_type = "missing", return_type = "original", num_missing = 0, unexpected_value = -999, lat_long = NA) {
   # filter_type: 
@@ -71,26 +86,29 @@ filter_df <- function(df, col = NA, filter_type = "missing", return_type = "orig
   
 # Check missing
 column <- "TaxonRank"
-filtered_df <- filter_df(survey_df, column)
-head(filtered_df)
+head(filter_df(survey_df, column))
 
 # Check unexpected
 column <- "AphiaID"
 head(filter_df(survey_df, column, filter_type = "unexpected", return_type = "original"))
 
-# Check lattitude longitude
+# Check latitude longitude
 ### Only arctic ocean for now: 
-#     - lattitude: [50, 70]
+#     - latitude: [50, 70]
 #     - longitude: [-140, -170]
+latlong = list(c(50, 70), c(-170, -140))
+
+# plot observations on map 
+# 
+head(filter_df(survey_df, column, return_type = "original", lat_long = latlong))
+```
+
+```{r}
 latlong = list(c(50, 70), c(-170, -140))
 head(filter_df(survey_df, column, return_type = "original", lat_long = latlong))
 ```
 
 
-```{r}
-# Column Options
-colnames(survey_df)
-```
 
 
 
@@ -103,11 +121,9 @@ need to go into annottaion platform (sea2) --> will get data template
 
 - maybe learn SQL if time permist
 
-```{r}
-survey_df %>% filter()
-```
 
-# EDA
+# Plotting
+
 - distributions
 - geographical loc. map
   - hist. / ggmap / plotly
@@ -117,4 +133,72 @@ survey_df %>% filter()
   - plot all the diff annotations for the ROV
   - by time and by geo. 
   
+## Distribution
+```{r}
+# conditions:
+### "Temperature", "Salinity", "Oxygen", 
+# species
+### Phylum, Class, Subclass, Order, Suborder, Family, Subfamily, Genus, Subgenus, Species, Subspecies
+# time
+### IdentificationDate, ObservationDate, ObservationTime
+# spatial
+### DepthInMeters, MinimumDepthInMeters, MaximumDepthInMeters
+
+
+filter_df(survey_df, col = "Temperature") %>% 
+  ggplot(aes(x=Temperature)) + 
+  geom_histogram()
+
+survey_df = filter_df(survey_df, col = "Temperature") 
+survey_df = filter_df(survey_df, col = "DepthInMeters") 
+survey_df = filter_df(survey_df, col = "Phylum") 
+
+survey_df %>% 
+  ggplot(aes(x=Temperature, y=DepthInMeters, color=Phylum)) + 
+  geom_point()
+  
+```
+
+  
+  
+## Geographic Location
+```{r}
+### Plot geographic location using ggplot ###
+# option to color by species / depth / other condition
+# conditions:
+### "Temperature", "Salinity", "Oxygen", 
+# species
+### Phylum, Class, Subclass, Order, Suborder, Family, Subfamily, Genus, Subgenus, Species, Subspecies
+# time
+### IdentificationDate, ObservationDate, ObservationTime
+# spatial
+### DepthInMeters, MinimumDepthInMeters, MaximumDepthInMeters
+
+
+set.seed(3)
+survey_df = filter_df(survey_df, col="Oxygen")
+survey_sf <- survey_df %>% 
+  st_as_sf(coords = c('Longitude', 'Latitude')) %>%
+  st_set_crs(4326) # using 4326 for lat/lon decimal 
+
+
+ggplot() +
+  geom_sf(data = survey_sf, aes(color = Oxygens), size = 3) 
+
+```
+
+```{r}
+### Plots geographic location + background map ###
+# Makes my computer lag 
+
+library(sp)
+library(leaflet)
+
+coordinates(survey_df) <- ~Longitude + Latitude
+
+# Plot the data using leaflet
+leaflet(survey_df) %>%
+  addTiles() %>%
+  addMarkers()
+```
   
