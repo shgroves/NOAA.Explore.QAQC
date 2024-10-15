@@ -1,0 +1,204 @@
+---
+title: "preprocessing"
+output: html_document
+date: "2024-09-20"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(sf)
+```
+Subset dataset based on missing values in a given column
+Run a conditional “if” statement based on the number of rows that either
+Returns a message stating no values are missing or
+Creates a table with the rows that are missing
+
+
+# Subset dataset
+
+```{r}
+setwd("~/NOAA/NOAA.Explore.QAQC/R")
+expedition = "EX2306_Survey_Data_20240528.csv"
+survey_df = read.csv(paste0("../../data/",expedition))
+# paste0: doesn't add seperators btw items else paste defaults to singel space
+# paste: can add optional delimiteers (sep = "_")
+```
+
+```{r}
+# Column Options
+colnames(survey_df)
+```
+
+```{r}
+### Data Cleaning ###
+# filter function for missing / unexpected values
+
+
+filter_df <- function(df, col = NA, filter_type = "missing", return_type = "original", num_missing = 0, unexpected_value = -999, lat_long = NA) {
+  # filter_type: 
+  #   -  "missing" : filter na values
+  #   - "unexpected" : filter value stored in unexpected_value
+  # return_type: 
+  #   -  original: return the original df filtered for specified values
+  #   -  filtered: return the rows that contain specified / missing value
+  # num_missing:
+  #   - threshold for missing values, return subset if >  num_missing
+  # unexpected_value
+  #   - value to filter unexpected by
+  
+  if (filter_type == "missing"){
+    subset_rows = is.na(df[[col]])
+    if (length(subset_rows) > num_missing) {
+      print(paste(length(subset_rows), "missing values in", col))
+    } else {
+      print(paste(nrow(filtered), "missing values in", col))
+    }
+  } else if (filter_type == "unexpected") {
+    subset_rows = df[[col]] == unexpected_value
+    num_unexp = length(subset_rows)
+    print(paste(num_unexp, "unexpected values in", col))
+  } else if (is.na(col) & !is.na(lat_long)){
+    # subset_rows = df %>%
+    #   filter(between(Latitude, lat_long[[1]][1], lat_long[[1]][2]) &
+    #          between(Longitude, lat_long[[2]][1], lat_long[[2]][2]))
+    subset_rows <- df %>%
+      mutate(in_range = between(Latitude, lat_long[[1]][1], lat_long[[1]][2]) &
+                         between(Longitude, lat_long[[2]][1], lat_long[[2]][2])) %>%
+      pull(in_range)
+    num_unexp = length(subset_rows)
+    print(paste(num_unexp, "values in not in lat/long range"))
+  }
+  
+  filtered <- df[subset_rows, ]
+  df <- df[!subset_rows,]
+  if (return_type == "original"){
+    return(df)
+  } else if (return_type == "filtered"){
+    return(filtered)
+  }
+}
+  
+# Check missing
+column <- "TaxonRank"
+head(filter_df(survey_df, column))
+
+# Check unexpected
+column <- "AphiaID"
+head(filter_df(survey_df, column, filter_type = "unexpected", return_type = "original"))
+
+# Check latitude longitude
+### Only arctic ocean for now: 
+#     - latitude: [50, 70]
+#     - longitude: [-140, -170]
+latlong = list(c(50, 70), c(-170, -140))
+
+# plot observations on map 
+# 
+head(filter_df(survey_df, column, return_type = "original", lat_long = latlong))
+```
+
+```{r}
+latlong = list(c(50, 70), c(-170, -140))
+head(filter_df(survey_df, column, return_type = "original", lat_long = latlong))
+```
+
+
+
+
+
+# Additional Data Cleaning: 
+values that dont make sense (ie -999 in AphiaID --> Test data)
+Time / Location (last yr, all USA)  (missing lat / long)
+only need to check col listed in sheet
+everything that has -999
+need to go into annottaion platform (sea2) --> will get data template
+
+- maybe learn SQL if time permist
+
+
+# Plotting
+
+- distributions
+- geographical loc. map
+  - hist. / ggmap / plotly
+  - https://r.geocompx.org/adv-map
+  - try and find some map background
+    - shape files
+  - plot all the diff annotations for the ROV
+  - by time and by geo. 
+  
+## Distribution
+```{r}
+# conditions:
+### "Temperature", "Salinity", "Oxygen", 
+# species
+### Phylum, Class, Subclass, Order, Suborder, Family, Subfamily, Genus, Subgenus, Species, Subspecies
+# time
+### IdentificationDate, ObservationDate, ObservationTime
+# spatial
+### DepthInMeters, MinimumDepthInMeters, MaximumDepthInMeters
+
+
+filter_df(survey_df, col = "Temperature") %>% 
+  ggplot(aes(x=Temperature)) + 
+  geom_histogram()
+
+survey_df = filter_df(survey_df, col = "Temperature") 
+survey_df = filter_df(survey_df, col = "DepthInMeters") 
+survey_df = filter_df(survey_df, col = "Phylum") 
+
+survey_df %>% 
+  ggplot(aes(x=Temperature, y=DepthInMeters, color=Phylum)) + 
+  geom_point()
+  
+```
+
+  
+  
+## Geographic Location
+```{r}
+### Plot geographic location using ggplot ###
+# option to color by species / depth / other condition
+# conditions:
+### "Temperature", "Salinity", "Oxygen", 
+# species
+### Phylum, Class, Subclass, Order, Suborder, Family, Subfamily, Genus, Subgenus, Species, Subspecies
+# time
+### IdentificationDate, ObservationDate, ObservationTime
+# spatial
+### DepthInMeters, MinimumDepthInMeters, MaximumDepthInMeters
+
+
+set.seed(3)
+survey_df = filter_df(survey_df, col="Oxygen")
+survey_sf <- survey_df %>% 
+  st_as_sf(coords = c('Longitude', 'Latitude')) %>%
+  st_set_crs(4326) # using 4326 for lat/lon decimal 
+
+
+ggplot() +
+  geom_sf(data = survey_sf, aes(color = Oxygens), size = 3) 
+
+```
+
+```{r}
+### Plots geographic location + background map ###
+# Makes my computer lag 
+
+library(sp)
+library(leaflet)
+
+coordinates(survey_df) <- ~Longitude + Latitude
+
+# Plot the data using leaflet
+leaflet(survey_df) %>%
+  addTiles() %>%
+  addMarkers()
+```
+  
