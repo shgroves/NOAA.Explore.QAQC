@@ -75,9 +75,9 @@ download_ROV_tracklines <- function(expeditions, data, data_location, data_downl
 
           # URL of the file to be downloaded
           ## ROV Text file
-          url <- paste0("https://sarahgroves:gfoeTHATCH1022!@exdata.tgfoe.org/OkeanosCruises/", i, "/Products/ROV/", toupper(j), "_", year, month, day, "/", toupper(j), ".txt")
+          url <- paste0("https://username:password@exdata.tgfoe.org/OkeanosCruises/", i, "/Products/ROV/", toupper(j), "_", year, month, day, "/", toupper(j), ".txt")
           ## Rov Track .csv
-          url2 <- paste0("https://sarahgroves:gfoeTHATCH1022!@exdata.tgfoe.org/OkeanosCruises/", i, "/Products/ROV/", toupper(j), "_", year, month, day, "/", toupper(j), "_RovTrack.csv")
+          url2 <- paste0("https://username:password@exdata.tgfoe.org/OkeanosCruises/", i, "/Products/ROV/", toupper(j), "_", year, month, day, "/", toupper(j), "_RovTrack.csv")
 
           # Destination directory to save the downloaded file
           dest_dir <- "C:/Users/sarah.groves/Documents/Data/"
