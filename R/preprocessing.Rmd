@@ -28,6 +28,7 @@ library(sf)
 user <- "Claire"
 #user <- "Sarah"
 
+print_table <- FALSE
 ```
 
 ## Set Expendition
@@ -66,9 +67,17 @@ if(nrow(missing_lat) == 0)
   "No missing data"
 } else
 {
-  missing_lat %>%
+  if (print_table){
+    missing_lat %>%
     dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
-  DT::datatable(missing_lat)  
+  DT::datatable(missing_lat)
+  }
+  else{
+    
+    print(paste(missing_lat %>% nrow() ,  "rows missing in latitutde column"))
+   
+  }
+  
   
 }
 ```
@@ -78,15 +87,22 @@ if(nrow(missing_lat) == 0)
 
 missing_lon <- survey_df[is.na(survey_df$Longitude),]
 
+
 if(nrow(missing_lon) == 0)
 {
   "No missing data"
 } else
 {
-  missing_lon %>%
+  if (print_table){
+    missing_lon %>%
     dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
-  DT::datatable(missing_lon)  
-  
+  DT::datatable(missing_lon)
+  }
+  else{
+    
+  print(paste(missing_lon %>% nrow() ,  "rows missing in longitude column"))
+   
+  }
 }
 ```
 
@@ -101,41 +117,62 @@ if(nrow(missing_depth) == 0)
   "No missing data"
 } else
 {
-  missing_lon %>%
+  if (print_table){
+    missing_depth %>%
     dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
-  DT::datatable(missing_depth)  
+  DT::datatable(missing_depth)
+  }
+  else{
+    print(paste(missing_depth  %>% nrow() ,  "rows missing in depth column"))
+   
+    
   
+  }
 }
 ```
 **Table 4.** Rows missing spatial information: CMECSGeoForm
 ```{r Missing data CMECSGeoForm, echo=FALSE}
 
-missing_lat <- survey_df[is.na(survey_df$CMECSGeoForm),]
+missing_geoform <- survey_df[is.na(survey_df$CMECSGeoForm),]
 
-if(nrow(missing_lat) == 0)
+if(nrow(missing_geoform) == 0)
 {
-"No missing data"
+  "No missing data"
 } else
 {
-missing_lat %>%
-    dplyr::select(SurveyID, ObservationDate, ObservationTime, SampleID)
-DT::datatable(missing_lat)  
+  if (print_table){
+    missing_geoform %>%
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_geoform)
+  }
+  else{
+    print(paste(missing_geoform %>% nrow()  ,  "rows missing in geoform column"))
+   
+    
+  }
 }
 ```
 
 **Table 5.** Rows missing identification information: ScientificName
 ```{r Missing data ScientificName, echo=FALSE}
 
-missing_lat <- survey_df[is.na(survey_df$ScientificName),]
+missing_sci_name <- survey_df[is.na(survey_df$ScientificName),]
 
-if(nrow(missing_lat) == 0)
+if(nrow(missing_sci_name) == 0)
 {
-"No missing data"
+  "No missing data"
 } else
 {
-missing_lat %>%
-    dplyr::select(SurveyID, ObservationDate, ObservationTime, SampleID)
-DT::datatable(missing_lat)  
+  if (print_table){
+    missing_sci_name %>%
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_sci_name)
+  }
+  else{
+    print(paste(missing_sci_name %>% nrow()   ,  "rows missing in scientific name column"))
+   
+    
+  }
 }
 ```
 
@@ -143,258 +180,354 @@ DT::datatable(missing_lat)
 **Table 6.** Rows missing identification information: AphiaID
 ```{r Missing data AphiaID, echo=FALSE}
 
-missing_lat <- survey_df[is.na(survey_df$AphiaID),]
+missing_id <- survey_df[is.na(survey_df$AphiaID),]
 
-if(nrow(missing_lat) == 0)
+if(nrow(missing_id) == 0)
 {
-"No missing data"
+  "No missing data"
 } else
 {
-missing_lat %>%
-    dplyr::select(SurveyID, ObservationDate, ObservationTime, SampleID)
-DT::datatable(missing_lat)  
+  if (print_table){
+    missing_id %>%
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_id)
+  }
+  else{
+    print(paste(missing_id %>% nrow()  ,  "rows missing in AphiaID column"))
+   
+    
+  }
 }
 ```
 **Table 7.** Rows missing identification information: LifeScienceIdentifier
 ```{r Missing data LifeScienceIdentifier, echo=FALSE}
 
-missing_lat <- survey_df[is.na(survey_df$LifeScienceIdentifier),]
+missing_sci_id <- survey_df[is.na(survey_df$LifeScienceIdentifier),]
 
-if(nrow(missing_lat) == 0)
+if(nrow(missing_sci_id) == 0)
 {
-"No missing data"
+  "No missing data"
 } else
 {
-missing_lat %>%
-    dplyr::select(SurveyID, ObservationDate, ObservationTime, SampleID)
-DT::datatable(missing_lat)  
+  if (print_table){
+    missing_sci_id %>%
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_sci_id)
+  }
+  else{
+    print(paste(  missing_sci_id %>% nrow()   ,  "rows missing in life science identifier column"))
+   
+   
+  }
 }
 ```
 **Table 8.** Rows missing identification information: TaxonRank
 ```{r Missing data TaxonRank, echo=FALSE}
 
-missing_lat <- survey_df[is.na(survey_df$TaxonRank),]
+missing_tax <- survey_df[is.na(survey_df$TaxonRank),]
 
-if(nrow(missing_lat) == 0)
+if(nrow(missing_tax) == 0)
 {
-"No missing data"
+  "No missing data"
 } else
 {
-missing_lat %>%
-    dplyr::select(SurveyID, ObservationDate, ObservationTime, SampleID)
-DT::datatable(missing_lat)  
+  if (print_table){
+    missing_tax %>%
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_tax)
+  }
+  else{
+    print(paste(missing_tax %>% nrow() ,  "rows missing in taxon column"))
+   
+     
+  }
 }
 ```
 
-**Table 9.**Rows missing identification information: DepthInMeters
-```{r Missing data DepthInMeters, echo=FALSE}
 
-missing_lat <- survey_df[is.na(survey_df$DepthInMeters),]
-
-if(nrow(missing_lat) == 0)
-{
-"No missing data"
-} else
-{
-missing_lat %>%
-    dplyr::select(SurveyID, ObservationDate, ObservationTime, SampleID)
-DT::datatable(missing_lat)  
-}
-```
-**Table 10.** Rows missing identification information: DepthMethod
+**Table 9.** Rows missing identification information: DepthMethod
 ```{r Missing data DepthMethod, echo=FALSE}
 
-missing_lat <- survey_df[is.na(survey_df$DepthMethod),]
+missing_depth_method <- survey_df[is.na(survey_df$DepthMethod),]
 
-if(nrow(missing_lat) == 0)
+if(nrow(missing_depth_method) == 0)
 {
-"No missing data"
+  "No missing data"
 } else
 {
-missing_lat %>%
-    dplyr::select(SurveyID, ObservationDate, ObservationTime, SampleID)
-DT::datatable(missing_lat)  
+  if (print_table){
+    missing_depth_method %>%
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_depth_method)
+  }
+  else{
+    print(paste( missing_depth_method %>% nrow()  ,  "rows missing in depth method column"))
+   
+    
+  }
 }
 ```
-**Table 11.** Rows missing identification information: MinimumDepthInMeters
+**Table 10.** Rows missing identification information: MinimumDepthInMeters
 ```{r Missing data MinimumDepthInMeters, echo=FALSE}
 
-missing_lat <- survey_df[is.na(survey_df$MinimumDepthInMeters),]
+missing_min_depth <- survey_df[is.na(survey_df$MinimumDepthInMeters),]
 
-if(nrow(missing_lat) == 0)
+if(nrow(missing_min_depth) == 0)
 {
-"No missing data"
+  "No missing data"
 } else
 {
-missing_lat %>%
-    dplyr::select(SurveyID, ObservationDate, ObservationTime, SampleID)
-DT::datatable(missing_lat)  
+  if (print_table){
+    missing_min_depth %>%
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_min_depth)
+  }
+  else{
+    print(paste(missing_min_depth %>% nrow() ,  "rows missing in minumum depth column"))
+   
+     
+  }
 }
 ```
-**Table 12.** Rows missing identification information: MaximumDepthInMeters
+**Table 11.** Rows missing identification information: MaximumDepthInMeters
 ```{r Missing data MaximumDepthInMeters, echo=FALSE}
 
-missing_lat <- survey_df[is.na(survey_df$MaximumDepthInMeters),]
+missing_max_depth <- survey_df[is.na(survey_df$MaximumDepthInMeters),]
 
-if(nrow(missing_lat) == 0)
+if(nrow(missing_max_depth) == 0)
 {
-"No missing data"
+  "No missing data"
 } else
 {
-missing_lat %>%
-    dplyr::select(SurveyID, ObservationDate, ObservationTime, SampleID)
-DT::datatable(missing_lat)  
+  if (print_table){
+    missing_max_depth %>%
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_max_depth)
+  }
+  else{
+    print(paste(missing_max_depth %>% nrow() ,  "rows missing in maximum depth column"))
+   
+      
+  }
 }
 ```
-**Table 13.** Rows missing temporal information: ObservationDate
+**Table 12.** Rows missing temporal information: ObservationDate
 ```{r Missing data ObservationDate, echo=FALSE}
 
-missing_lat <- survey_df[is.na(survey_df$ObservationDate),]
+missing_date <- survey_df[is.na(survey_df$ObservationDate),]
 
-if(nrow(missing_lat) == 0)
+if(nrow(missing_date) == 0)
 {
-"No missing data"
+  "No missing data"
 } else
 {
-missing_lat %>%
-    dplyr::select(SurveyID, ObservationDate, ObservationTime, SampleID)
-DT::datatable(missing_lat)  
+  if (print_table){
+    missing_date %>%
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_date)
+  }
+  else{
+    print(paste(missing_date %>% nrow()  ,  "rows missing in date column"))
+   
+    
+  }
 }
 ```
-**Table 14.** Rows missing temporal information: ObservationTime
+**Table 13.** Rows missing temporal information: ObservationTime
 ```{r Missing data ObservationTime, echo=FALSE}
 
-missing_lat <- survey_df[is.na(survey_df$ObservationTime),]
+missing_time <- survey_df[is.na(survey_df$ObservationTime),]
 
-if(nrow(missing_lat) == 0)
+if(nrow(missing_time) == 0)
 {
-"No missing data"
+  "No missing data"
 } else
 {
-missing_lat %>%
-    dplyr::select(SurveyID, ObservationDate, ObservationTime, SampleID)
-DT::datatable(missing_lat)  
+  if (print_table){
+    missing_time %>%
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_time)
+  }
+  else{
+    print(paste(missing_time %>% nrow()   ,  "rows missing in time column"))
+   
+    
+  }
 }
 ```
-**Table 15.** Rows missing identification information: SurveyID
+**Table 14.** Rows missing identification information: SurveyID
 ```{r Missing data SurveyID, echo=FALSE}
 
-missing_lat <- survey_df[is.na(survey_df$SurveyID),]
+missing_survey_id <- survey_df[is.na(survey_df$SurveyID),]
 
-if(nrow(missing_lat) == 0)
+if(nrow(missing_survey_id) == 0)
 {
-"No missing data"
+  "No missing data"
 } else
 {
-missing_lat %>%
-    dplyr::select(SurveyID, ObservationDate, ObservationTime, SampleID)
-DT::datatable(missing_lat)  
+  if (print_table){
+    missing_survey_id %>%
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_survey_id)
+  }
+  else{
+    print(paste(missing_survey_id %>% nrow()  ,  "rows missing in survey id column"))
+   
+    
+  }
 }
 ```
-**Table 16.** Rows missing sensor information: Density
+**Table 15.** Rows missing sensor information: Density
 ```{r Missing data Density, echo=FALSE}
 
-missing_lat <- survey_df[is.na(survey_df$Density),]
+missing_density <- survey_df[is.na(survey_df$Density),]
 
-if(nrow(missing_lat) == 0)
+if(nrow(missing_density) == 0)
 {
-"No missing data"
+  "No missing data"
 } else
 {
-missing_lat %>%
-    dplyr::select(SurveyID, ObservationDate, ObservationTime, SampleID)
-DT::datatable(missing_lat)  
+  if (print_table){
+    missing_density %>%
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_density)
+  }
+  else{
+    print(paste( missing_density %>% nrow()   ,  "rows missing in density column"))
+   
+    
+  }
 }
 ```
-**Table 17.** Rows missing sensor information: Cover
+**Table 16.** Rows missing sensor information: Cover
 ```{r Missing data Cover, echo=FALSE}
 
-missing_lat <- survey_df[is.na(survey_df$Cover),]
+missing_cover <- survey_df[is.na(survey_df$Cover),]
 
-if(nrow(missing_lat) == 0)
+if(nrow(missing_cover) == 0)
 {
-"No missing data"
+  "No missing data"
 } else
 {
-missing_lat %>%
-    dplyr::select(SurveyID, ObservationDate, ObservationTime, SampleID)
-DT::datatable(missing_lat)  
+  if (print_table){
+    missing_cover %>%
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_cover)
+  }
+  else{
+    print(paste(missing_cover %>% nrow()  ,  "rows missing in cover column"))
+   
+    
+  }
 }
 ```
-**Table 18.** Rows missing geographical information: Habitat
+**Table 17.** Rows missing geographical information: Habitat
 ```{r Missing data Habitat, echo=FALSE}
 
-missing_lat <- survey_df[is.na(survey_df$Habitat),]
+missing_habitat <- survey_df[is.na(survey_df$Habitat),]
 
-if(nrow(missing_lat) == 0)
+if(nrow(missing_habitat) == 0)
 {
-"No missing data"
+  "No missing data"
 } else
 {
-missing_lat %>%
-    dplyr::select(SurveyID, ObservationDate, ObservationTime, SampleID)
-DT::datatable(missing_lat)  
+  if (print_table){
+    missing_habitat %>%
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_habitat)
+  }
+  else{
+    print(paste(missing_habitat %>% nrow()  ,  "rows missing in habitat column"))
+   
+    
+  }
 }
 ```
-**Table 19.** Rows missing geographical information: Substrate
+**Table 18.** Rows missing geographical information: Substrate
 ```{r Missing data Substrate, echo=FALSE}
 
-missing_lat <- survey_df[is.na(survey_df$Substrate),]
+missing_substrate <- survey_df[is.na(survey_df$Substrate),]
 
-if(nrow(missing_lat) == 0)
+if(nrow(missing_substrate) == 0)
 {
-"No missing data"
+  "No missing data"
 } else
 {
-missing_lat %>%
-    dplyr::select(SurveyID, ObservationDate, ObservationTime, SampleID)
-DT::datatable(missing_lat)  
+  if (print_table){
+    missing_substrate %>%
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_substrate)
+  }
+  else{
+    
+    print(paste( missing_substrate %>% nrow()  ,  "rows missing in substrate column"))
+   
+  }
 }
 ```
 
-**Table 20.** Rows missing sensor information: Temperature
+**Table 19.** Rows missing sensor information: Temperature
 ```{r Missing data Temperature, echo=FALSE}
 
-missing_lat <- survey_df[is.na(survey_df$Temperature),]
+missing_temp <- survey_df[is.na(survey_df$Temperature),]
 
-if(nrow(missing_lat) == 0)
+if(nrow(missing_temp) == 0)
 {
-"No missing data"
+  "No missing data"
 } else
 {
-missing_lat %>%
-    dplyr::select(SurveyID, ObservationDate, ObservationTime, SampleID)
-DT::datatable(missing_lat)  
+  if (print_table){
+    missing_temp %>%
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_temp)
+  }
+  else{
+    print(paste( missing_temp %>% nrow(),  "rows missing in temperature column"))
+   
+  }
 }
 ```
-**Table 21.** Rows missing sensor information: Salinity
+**Table 20.** Rows missing sensor information: Salinity
 ```{r Missing data Salinity, echo=FALSE}
 
-missing_lat <- survey_df[is.na(survey_df$Salinity),]
+missing_salinity <- survey_df[is.na(survey_df$Salinity),]
 
-if(nrow(missing_lat) == 0)
+if(nrow(missing_salinity) == 0)
 {
-"No missing data"
+  "No missing data"
 } else
 {
-missing_lat %>%
-    dplyr::select(SurveyID, ObservationDate, ObservationTime, SampleID)
-DT::datatable(missing_lat)  
+  if (print_table){
+    missing_salinity %>%
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_salinity)
+  }
+  else{
+    print(paste(missing_salinity %>% nrow()  , "rows missing in salinity column"))
+
+  }
 }
 ```
-**Table 22.** Rows missing sensor information: Oxygen
+**Table 21.** Rows missing sensor information: Oxygen
 ```{r Missing data Oxygen, echo=FALSE}
 
-missing_lat <- survey_df[is.na(survey_df$Oxygen),]
+missing_ox <- survey_df[is.na(survey_df$Oxygen),]
 
-if(nrow(missing_lat) == 0)
+missing_ox <- survey_df[is.na(survey_df$Substrate),]
+
+if(nrow(missing_ox) == 0)
 {
-"No missing data"
+  "No missing data"
 } else
 {
-missing_lat %>%
-    dplyr::select(SurveyID, ObservationDate, ObservationTime, SampleID)
-DT::datatable(missing_lat)  
+  if (print_table){
+    missing_ox %>%
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_ox)
+  }
+  else{
+    print(paste(missing_ox %>% nrow(), "rows missing in oxygen column"))
+  }
 }
 ```
 
@@ -507,7 +640,7 @@ obs_time_plot
 ```
 
 **Fig. 10.** Histogram and probability distribution of Temperature.  
-```{r hist of depth, fig.height = 4, fig.width = 7, echo = FALSE}
+```{r hist of temperature, fig.height = 4, fig.width = 7, echo = FALSE}
 
 # create unique sites
 uniquesites <- unique(survey_df[, c("SurveyID", "ObservationDate", "ObservationTime", "SampleID", "Temperature" )]) 
@@ -527,7 +660,7 @@ temp_hist
 ```
 
 **Fig. 11.** Histogram and probability distribution of Salinity.  
-```{r hist of depth, fig.height = 4, fig.width = 7, echo = FALSE}
+```{r hist of salinity, fig.height = 4, fig.width = 7, echo = FALSE}
 
 # create unique sites
 uniquesites <- unique(survey_df[, c("SurveyID", "ObservationDate", "ObservationTime", "SampleID", "Salinity" )]) 
@@ -547,7 +680,7 @@ salinity_hist
 ```
 
 **Fig. 12.** Histogram and probability distribution of Oxygen.  
-```{r hist of depth, fig.height = 4, fig.width = 7, echo = FALSE}
+```{r hist of oxygen, fig.height = 4, fig.width = 7, echo = FALSE}
 
 # create unique sites
 uniquesites <- unique(survey_df[, c("SurveyID", "ObservationDate", "ObservationTime", "SampleID", "Oxygen" )]) 
@@ -564,7 +697,6 @@ summary(uniquesites$Oxygen)
 
 ox_hist
 ```
-
 
 # Check Values
 
@@ -590,6 +722,19 @@ print(unique(survey_df$Substrate))
 
 ```
 
+# Plot Map
+```{r}
+plt_df = survey_df %>% select(AphiaID, Genus, Species, Latitude, Longitude)
+colnames(plt_df) <- c("AphiaID", "Genus", "Species", "latitude", "longitude")
+
+df <- data.frame(name = c('Poa annua', 'Puma concolor'),
+                 longitude = c(-120,-121),
+                 latitude = c(41, 42), stringsAsFactors = FALSE)
+map_leaflet(df)
+
+map_leaflet
+```
+
 
 # Compare with Obis Dataset
 
@@ -604,14 +749,14 @@ get_occurences <- check_aphiaid_near_location <- function(aphiaid) {
   return(occurrences = occurrences)
 }
 
-check_distances <- function(aphiaid, occurrences, samples_df, radius = 50, print_map = FALSE){
+check_distances <- function(aphiaid, occurrences, samples_df, radius = 0.5, print_map = FALSE){
   subset_df = samples_df[samples_df$AphiaID == aphiaid, ]
-  lattitudes = subset_df$Latitude
+  latitudes = subset_df$Latitude
   longitudes = subset_df$Longitude
   subset_df[, "Distance"] = NA
   if (nrow(occurrences) != 0) {
     print(nrow(occurrences))
-    for (dist in 1:length(lattitudes)){
+    for (dist in 1:length(latitudes)){
       subset_df[dist,]$Distance = min(geosphere::distHaversine(
       matrix(c(longitudes[dist], latitudes[dist]), ncol = 2),
       matrix(c(occurrences$decimalLongitude, occurrences$decimalLatitude), ncol = 2)
@@ -620,43 +765,51 @@ check_distances <- function(aphiaid, occurrences, samples_df, radius = 50, print
   }
   return(subset_df)
 }
-check_aphiaid_near_location <- function(occurences, subset_df, print_map = FALSE) {
+
+check_aphiaid_near_location <- function(occurences, subset_df, radius, output_dir, print_map = FALSE) {
+  aphiaid = subset_df$AphiaID[1]
   num_found = sum(subset_df$Distance <= radius)
   # print(subset_df$Genus[1], subset_df$Species[1])
   print(paste("Found", num_found, "samples within", radius, "km"))
   if (num_found > 0){
     found = TRUE
+    write(paste(cat(aphiaid[1]), cat(num_found[1])), paste0(output_dir, "found.csv"))
   } else {
     found = FALSE
-  }
+    write(paste0(aphiaid[1], num_found[1]), file = paste0(output_dir, "checked.csv"))  }
   if (print_map) {
     map_leaflet(occurrences)
   }
   return(found)
 }
-
-aphiaids <- survey_df$AphiaID 
-samples_df = survey_df %>% select(AphiaID, Genus, Species, Latitude, Longitude)
-output_dir = "aphiaid/"
-for (i in 1:length(aphiaids)){
-  print(i)
-  aphiaid = aphiaids[i]
-  print(paste("Aphia ID:", aphiaid))
-  occurrences <- get_occurences(aphiaid)
-  subset_df <- check_distances(aphiaid, occurrences, samples_df, radius = 50)
-  found <- check_aphiaid_near_location(occurrences, subset_df)
-  if (found) {
-    write.csv(occurrences, file = paste(output_dir, "aphiaid_",aphiaid, "_occurences.csv", sep=""))
-    write.csv(subset_df, file = paste(output_dir, "aphiaid_",aphiaid, "_survey.csv", sep=""))
-    # if (print_map) {
-    #   map_leaflet(occurrences)
-    # }
-  }
-}
-
-check_aphiaid_near_location
-print(results)
 ```
 
+
+```{r}
+# aphiaids <- survey_df$AphiaID 
+# samples_df = survey_df %>% select(AphiaID, Genus, Species, Latitude, Longitude)
+# output_dir = "../data/aphiaid/"
+# for (i in 6:length(aphiaids)){
+#   radius = 0.5
+#   print(i)
+#   aphiaid = aphiaids[i]
+#   print(paste("Aphia ID:", aphiaid))
+#   occurrences <- get_occurences(aphiaid)
+#   # radius is in km
+#   subset_df <- check_distances(aphiaid, occurrences, samples_df, radius = radius)
+#   found <- check_aphiaid_near_location(occurrences, subset_df, radius, output_dir)
+#   if (found) {
+#     write.csv(occurrences, file = paste(output_dir, "aphiaid_",aphiaid, "_occurences.csv", sep=""))
+#     write.csv(subset_df, file = paste(output_dir, "aphiaid_",aphiaid, "_survey.csv", sep=""))
+#     write.csv(paste0(aphiaid, ""))
+#     # if (print_map) {
+#     #   map_leaflet(occurrences)
+#     # }
+#   }
+# }
+# 
+# check_aphiaid_near_location
+# print(results)
+```
 
 
