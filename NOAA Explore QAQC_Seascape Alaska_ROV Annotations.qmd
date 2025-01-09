@@ -30,6 +30,7 @@ source("C:/Users/sarah.groves/Documents/R_packages/NOAA.Explore.QAQC/R/download_
 ```
 
 # Select the expedition
+
 ```{r}
 
 expedition <- "EX2306"
@@ -131,7 +132,8 @@ raw <- df|>
 #length(unique(raw$`Annotation ID`))
 ```
 
-### Summarize data by expedition 
+### Summarize data by expedition
+
 ```{r}
 
 #| echo: false
@@ -169,6 +171,7 @@ Total_unique_taxa_ex <- dplyr::bind_rows(clean |> dplyr::select(Expedition, data
 ```
 
 ### Summarize data by dive
+
 ```{r}
 
 #| echo: false
@@ -224,7 +227,7 @@ for(i in dives){
 ```
 
 ```{r}
-DT::datatable(rov_dat_by_taxa, caption = "Table 2: Comparison of biological observations created by real-time annotations (Event_log) and the DARC lab QAQC process (SME_QAQC) by taxa for each dive conducted during EX2306")
+DT::datatable(rov_dat_by_dive_taxa, caption = "Table 2: Comparison of biological observations created by real-time annotations (Event_log) and the DARC lab QAQC process (SME_QAQC) by taxa for each dive conducted during EX2306")
 
 ```
 
@@ -234,10 +237,10 @@ DT::datatable(rov_dat_by_taxa, caption = "Table 2: Comparison of biological obse
 
 # Change TaxonRank to a factor and put it in order
 
-rov_dat_by_taxa$TaxonRank <- factor(rov_dat_by_taxa$TaxonRank, levels=c("Kingdom","Phylum", "Subphylum", "Gigaclass", "Superclass", "Class", "Infraclass", "Subclass", "Superorder", "Order", "Suborder" , "Infraorder", "Superfamily", "Family", "Subfamily", "Genus", "Species", "Subspecies"))
+rov_dat_by_dive_taxa$TaxonRank <- factor(rov_dat_by_dive_taxa$TaxonRank, levels=c("Kingdom","Phylum", "Subphylum", "Gigaclass", "Superclass", "Class", "Infraclass", "Subclass", "Superorder", "Order", "Suborder" , "Infraorder", "Superfamily", "Family", "Subfamily", "Genus", "Species", "Subspecies"))
 
 for(i in dives){
-  plot <- ggplot(rov_dat_by_taxa |> dplyr::filter(Dive == i), aes(x = TaxonRank, y = n_obs, fill = data_type)) + 
+  plot <- ggplot(rov_dat_by_dive_taxa |> dplyr::filter(Dive == i), aes(x = TaxonRank, y = n_obs, fill = data_type)) + 
     geom_bar(stat = "identity", position="dodge") +
     ggtitle(i) +
     labs(x = "Taxa", y = "Biological annotations") +
@@ -285,6 +288,7 @@ for(i in dives){
 ```
 
 ### Summarise the number of unique identifications at specified taxonomic levels
+
 ```{r}
 
 clean_sum <- clean |>
@@ -295,16 +299,53 @@ clean_sum <- clean |>
 ```
 
 # Calculate annotations per minute
+
 ```{r}
 
 # Pull the entire ROV track from the Data Landing Page (DLP)
 
 download_ROV_tracklines(expeditions = expedition,
                         data = clean,
-                        data_location = "GFOE",
+                        data_location = "GFOE", # if data location == the GFOE server, you need to provide your user name and password. If data location == "DLP", leave blank. Always delete your user name and password if sharing this file online or committing to GitHub!!!
+                        username = "sarahgroves",
+                        password = "gfoeTHATCH1022!",
                         data_downloaded = "NULL")
 
 # Pull the text file from the DLP
 
 ```
 
+# Now that you have downloaded all of the files to a single location, we can read them in to calculate total time, bottom time, and annotations per minute.
+
+```{r}
+
+# turn into function
+read_dive_summaries <- function(text_file_name, dive_number) {
+  # arguments:
+  # text_file_name is a character string for the read_table function (do not include the ".txt" at the end)
+  # dive_number is a character string with the dive number capitalized
+  tmp <- read.delim("~/Data/EX2306/ROV_data/EX2306_Dive01.txt", encoding="UTF-8", header=FALSE) %>%
+  slice(-2) %>%
+  separate(V1, sep = ":") %>%
+  rename(tmp = Dive) %>%
+  filter(!str_detect(tmp, '°')) %>%
+  separate(tmp, c("a", "b", "c"), sep = " ") %>%
+  slice(-c(5:7)) %>%
+  mutate(b = str_remove(b, ":"),
+         a = str_trim(a, side = c("both")),
+         b = str_trim(b, side = c("both")),
+         c = str_trim(c, side = c("both")),
+         type = paste(a, b, sep = " ")) %>%
+  select(-c(a,b)) %>%
+  rename(date_time = c) %>%
+  mutate(date_time = str_replace(date_time, "T", " "),
+         cruise = "EX1903",
+         dive_number = dive_number,
+         date_time = ymd_hms(date_time),
+         type = tolower(type),
+         type = gsub(" ", "_", type)) %>%
+  select(cruise, dive_number, type, date_time)
+
+}
+
+```

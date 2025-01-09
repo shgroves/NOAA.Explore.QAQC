@@ -1,6 +1,6 @@
 
 
-download_ROV_tracklines <- function(expeditions, data, data_location, data_downloaded = "NULL") {
+download_ROV_tracklines <- function(expeditions, data, data_location, username = "NULL", password = "NULL", data_downloaded = "NULL") {
 
 
 
@@ -24,8 +24,6 @@ download_ROV_tracklines <- function(expeditions, data, data_location, data_downl
 
           url <- paste0("https://oer.hpc.msstate.edu/okeanos/", i, "/", i, "-DIVE0", j, "-ancillary-data.zip")
 
-          #https://oer.hpc.msstate.edu/okeanos/ex1711/ex1711-DIVE01-ancillary-data.zip
-          #https://oer.hpc.msstate.edu/okeanos/ex1711/ex1711-DIVE01-ancillary-data.zip
           # Destination directory to save the downloaded file
           dest_dir <- "C:/Users/sarah.groves/Documents/Data/ROV_tracks/"
 
@@ -75,9 +73,10 @@ download_ROV_tracklines <- function(expeditions, data, data_location, data_downl
 
           # URL of the file to be downloaded
           ## ROV Text file
-          url <- paste0("https://username:password@exdata.tgfoe.org/OkeanosCruises/", i, "/Products/ROV/", toupper(j), "_", year, month, day, "/", toupper(j), ".txt")
+
+          url <- paste0("https://", username,":", password, "@exdata.tgfoe.org/OkeanosCruises/", i, "/Products/ROV/", toupper(j), "_", year, month, day, "/", toupper(j), ".txt")
           ## Rov Track .csv
-          url2 <- paste0("https://username:password@exdata.tgfoe.org/OkeanosCruises/", i, "/Products/ROV/", toupper(j), "_", year, month, day, "/", toupper(j), "_RovTrack.csv")
+          url2 <- paste0("https://", username,":", password, "@exdata.tgfoe.org/OkeanosCruises/", i, "/Products/ROV/", toupper(j), "_", year, month, day, "/", toupper(j), "_RovTrack.csv")
 
           # Destination directory to save the downloaded file
           dest_dir <- "C:/Users/sarah.groves/Documents/Data/"
@@ -96,7 +95,8 @@ download_ROV_tracklines <- function(expeditions, data, data_location, data_downl
     }
 
     if(is.null(data_location)) {print("Please specify a data location, either `DLP` for the Data Landing Pages or `GFOE` for the GFOE server.
-                                      Note GFOE server requires collaboration tools account and log in.")}
+                                      Note GFOE server requires collaboration tools account and username and password. For security reasons,
+                                      delete your username and password when sharing this function online")}
 
 
 
