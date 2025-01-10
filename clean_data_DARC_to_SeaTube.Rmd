@@ -1,0 +1,844 @@
+---
+title: "Clean & Reformat data: DARC to SeaTube"
+output: html_document
+date: "2024-09-20"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Set up
+
+## Load libraries
+
+```{r, echo=FALSE}
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(sf)
+library(ggOceanMaps)
+```
+
+## Set user
+
+```{r}
+
+#user <- "Claire"
+user <- "Sarah"
+
+print_table <- FALSE
+```
+
+## Set Expendition
+
+```{r}
+expedtion <- "EX2306" # change this each time you run
+```
+
+
+Subset dataset based on missing values in a given column Run a conditional “if” statement based on the number of rows that either Returns a message stating no values are missing or Creates a table with the rows that are missing
+
+```{r}
+
+if(user == "Claire"){
+  setwd("~/NOAA/NOAA.Explore.QAQC/R") 
+  expedition = "EX2306_Survey_Data_20240528.csv"
+  survey_df = read.csv(paste0("../../data/",expedition)) |>
+    dplyr::filter(AphiaID != -999)}
+
+if(user == "Sarah"){
+  expedition = "EX2306" 
+  survey_df = read.csv(paste0("C:/Users/sarah.groves/Documents/Data/EX2306/SME_clean/",expedition, "_Survey_Data_20240528.csv")) |>
+    dplyr::filter(AphiaID != -999)}
+
+
+# Helpful notes:
+# paste0: doesn't add separators btw items else paste defaults to single space
+# paste: can add optional delimiters (sep = "_")
+```
+
+
+# Missing Data
+
+**Table 1.** Rows missing spatial information: Latitude
+```{r Missing data Latitude, echo=FALSE}
+
+missing_lat <- survey_df[is.na(survey_df$Latitude),]
+
+if(nrow(missing_lat) == 0)
+{
+  "No missing data"
+} else
+{
+  if (print_table){
+    missing_lat |>
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_lat)
+  }
+  else{
+    
+    print(paste(missing_lat |> nrow() ,  "rows missing in latitutde column"))
+   
+  }
+  
+  
+}
+```
+
+**Table 2.** Rows missing spatial information: Longitude
+```{r Missing data Longitude, echo=FALSE}
+
+missing_lon <- survey_df[is.na(survey_df$Longitude),]
+
+
+if(nrow(missing_lon) == 0)
+{
+  "No missing data"
+} else
+{
+  if (print_table){
+    missing_lon |>
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_lon)
+  }
+  else{
+    
+  print(paste(missing_lon |> nrow() ,  "rows missing in longitude column"))
+   
+  }
+}
+```
+
+
+**Table 3.** Rows missing spatial information: Depth (m)
+```{r Missing data Depth , echo=FALSE}
+
+missing_depth <- survey_df[is.na(survey_df$DepthInMeters),]
+
+if(nrow(missing_depth) == 0)
+{
+  "No missing data"
+} else
+{
+  if (print_table){
+    missing_depth |>
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_depth)
+  }
+  else{
+    print(paste(missing_depth  |> nrow() ,  "rows missing in depth column"))
+   
+    
+  
+  }
+}
+```
+**Table 4.** Rows missing substrate information: CMECSGeoForm
+```{r Missing data CMECSGeoForm, echo=FALSE}
+
+missing_geoform <- survey_df[is.na(survey_df$CMECSGeoForm),]
+
+if(nrow(missing_geoform) == 0)
+{
+  "No missing data"
+} else
+{
+  if (print_table){
+    missing_geoform |>
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_geoform)
+  }
+  else{
+    print(paste(missing_geoform |> nrow()  ,  "rows missing in geoform column"))
+   
+    
+  }
+}
+```
+
+**Table 5.** Rows missing identification information: ScientificName
+```{r Missing data ScientificName, echo=FALSE}
+
+missing_sci_name <- survey_df[is.na(survey_df$ScientificName),]
+
+if(nrow(missing_sci_name) == 0)
+{
+  "No missing data"
+} else
+{
+  if (print_table){
+    missing_sci_name |>
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_sci_name)
+  }
+  else{
+    print(paste(missing_sci_name |> nrow()   ,  "rows missing in scientific name column"))
+   
+    
+  }
+}
+```
+
+
+**Table 6.** Rows missing identification information: AphiaID
+```{r Missing data AphiaID, echo=FALSE}
+
+missing_id <- survey_df[is.na(survey_df$AphiaID),]
+
+if(nrow(missing_id) == 0)
+{
+  "No missing data"
+} else
+{
+  if (print_table){
+    missing_id |>
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_id)
+  }
+  else{
+    print(paste(missing_id |> nrow()  ,  "rows missing in AphiaID column"))
+   
+    
+  }
+}
+```
+**Table 7.** Rows missing identification information: LifeScienceIdentifier
+```{r Missing data LifeScienceIdentifier, echo=FALSE}
+
+missing_sci_id <- survey_df[is.na(survey_df$LifeScienceIdentifier),]
+
+if(nrow(missing_sci_id) == 0)
+{
+  "No missing data"
+} else
+{
+  if (print_table){
+    missing_sci_id |>
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_sci_id)
+  }
+  else{
+    print(paste(  missing_sci_id |> nrow()   ,  "rows missing in life science identifier column"))
+   
+   
+  }
+}
+```
+**Table 8.** Rows missing identification information: TaxonRank
+```{r Missing data TaxonRank, echo=FALSE}
+
+missing_tax <- survey_df[is.na(survey_df$TaxonRank),]
+
+if(nrow(missing_tax) == 0)
+{
+  "No missing data"
+} else
+{
+  if (print_table){
+    missing_tax |>
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_tax)
+  }
+  else{
+    print(paste(missing_tax |> nrow() ,  "rows missing in taxon column"))
+   
+     
+  }
+}
+```
+
+
+**Table 9.** Rows missing identification information: DepthMethod
+```{r Missing data DepthMethod, echo=FALSE}
+
+missing_depth_method <- survey_df[is.na(survey_df$DepthMethod),]
+
+if(nrow(missing_depth_method) == 0)
+{
+  "No missing data"
+} else
+{
+  if (print_table){
+    missing_depth_method |>
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_depth_method)
+  }
+  else{
+    print(paste( missing_depth_method |> nrow()  ,  "rows missing in depth method column"))
+   
+    
+  }
+}
+```
+**Table 10.** Rows missing identification information: MinimumDepthInMeters
+```{r Missing data MinimumDepthInMeters, echo=FALSE}
+
+missing_min_depth <- survey_df[is.na(survey_df$MinimumDepthInMeters),]
+
+if(nrow(missing_min_depth) == 0)
+{
+  "No missing data"
+} else
+{
+  if (print_table){
+    missing_min_depth |>
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_min_depth)
+  }
+  else{
+    print(paste(missing_min_depth |> nrow() ,  "rows missing in minumum depth column"))
+   
+     
+  }
+}
+```
+**Table 11.** Rows missing identification information: MaximumDepthInMeters
+```{r Missing data MaximumDepthInMeters, echo=FALSE}
+
+missing_max_depth <- survey_df[is.na(survey_df$MaximumDepthInMeters),]
+
+if(nrow(missing_max_depth) == 0)
+{
+  "No missing data"
+} else
+{
+  if (print_table){
+    missing_max_depth |>
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_max_depth)
+  }
+  else{
+    print(paste(missing_max_depth |> nrow() ,  "rows missing in maximum depth column"))
+   
+      
+  }
+}
+```
+**Table 12.** Rows missing temporal information: ObservationDate
+```{r Missing data ObservationDate, echo=FALSE}
+
+missing_date <- survey_df[is.na(survey_df$ObservationDate),]
+
+if(nrow(missing_date) == 0)
+{
+  "No missing data"
+} else
+{
+  if (print_table){
+    missing_date |>
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_date)
+  }
+  else{
+    print(paste(missing_date |> nrow()  ,  "rows missing in date column"))
+   
+    
+  }
+}
+```
+**Table 13.** Rows missing temporal information: ObservationTime
+```{r Missing data ObservationTime, echo=FALSE}
+
+missing_time <- survey_df[is.na(survey_df$ObservationTime),]
+
+if(nrow(missing_time) == 0)
+{
+  "No missing data"
+} else
+{
+  if (print_table){
+    missing_time |>
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_time)
+  }
+  else{
+    print(paste(missing_time |> nrow()   ,  "rows missing in time column"))
+   
+    
+  }
+}
+```
+**Table 14.** Rows missing identification information: SurveyID
+```{r Missing data SurveyID, echo=FALSE}
+
+missing_survey_id <- survey_df[is.na(survey_df$SurveyID),]
+
+if(nrow(missing_survey_id) == 0)
+{
+  "No missing data"
+} else
+{
+  if (print_table){
+    missing_survey_id |>
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_survey_id)
+  }
+  else{
+    print(paste(missing_survey_id |> nrow()  ,  "rows missing in survey id column"))
+   
+    
+  }
+}
+```
+**Table 15.** Rows missing sensor information: Temperature
+```{r Missing data Density, echo=FALSE}
+
+missing_temp <- survey_df[is.na(survey_df$Temperature),]
+
+if(nrow(missing_temp) == 0)
+{
+  "No missing data"
+} else
+{
+  if (print_table){
+    missing_temp |>
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_temp)
+  }
+  else{
+    print(paste( missing_temp |> nrow()   ,  "rows missing in Temperature column"))
+   
+    
+  }
+}
+```
+**Table 16.** Rows missing sensor information: Salinity
+```{r Missing data Cover, echo=FALSE}
+
+missing_sal <- survey_df[is.na(survey_df$Salinity),]
+
+if(nrow(missing_sal) == 0)
+{
+  "No missing data"
+} else
+{
+  if (print_table){
+    missing_sal |>
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_sal)
+  }
+  else{
+    print(paste(missing_sal |> nrow()  ,  "rows missing in Salinity column"))
+   
+    
+  }
+}
+```
+
+**Table 17.** Rows missing sensor information: Oxygen
+```{r Missing data Cover, echo=FALSE}
+
+missing_o2 <- survey_df[is.na(survey_df$Oxygen),]
+
+if(nrow(missing_o2) == 0)
+{
+  "No missing data"
+} else
+{
+  if (print_table){
+    missing_o2 |>
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_o2)
+  }
+  else{
+    print(paste(missing_o2 |> nrow()  ,  "rows missing in Oxygen column"))
+   
+    
+  }
+}
+```
+
+**Table 18.** Rows missing geographical information: Habitat
+```{r Missing data Habitat, echo=FALSE}
+
+missing_habitat <- survey_df[is.na(survey_df$Habitat),]
+
+if(nrow(missing_habitat) == 0)
+{
+  "No missing data"
+} else
+{
+  if (print_table){
+    missing_habitat |>
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_habitat)
+  }
+  else{
+    print(paste(missing_habitat |> nrow()  ,  "rows missing in habitat column"))
+   
+    
+  }
+}
+```
+**Table 19.** Rows missing geographical information: Substrate
+```{r Missing data Substrate, echo=FALSE}
+
+missing_substrate <- survey_df[is.na(survey_df$Substrate),]
+
+if(nrow(missing_substrate) == 0)
+{
+  "No missing data"
+} else
+{
+  if (print_table){
+    missing_substrate |>
+    dplyr::select(SurveyID, ObservationDate,ObservationTime, SampleID)
+  DT::datatable(missing_substrate)
+  }
+  else{
+    print(paste(missing_substrate |> nrow()  ,  "rows missing in substrate column"))
+   
+    
+  }
+}
+```
+
+
+
+# Plot Data
+
+**Fig. 1.** Histogram of annotation Latitude.  
+```{r hist of annotation Latitude, fig.height = 4, fig.width = 7, echo = FALSE}
+
+# create unique sites
+uniquesites <- unique(survey_df[, c("SurveyID", "ObservationDate", "ObservationTime", "SampleID", "Latitude" )])
+
+Latitude_hist <- ggplot(uniquesites, aes(x=Latitude)) + 
+  geom_histogram() +
+  theme_bw() + 
+  xlab("Latitude")
+
+"Summary statistics of latitude:"
+summary(uniquesites$Latitude)
+
+
+Latitude_hist
+
+```
+
+**Fig. 2.** Histogram of annotation Longitude.  
+```{r hist of annotation Longitude, fig.height = 4, fig.width = 7, echo = FALSE}
+
+# create unique sites
+uniquesites <- unique(survey_df[, c("SurveyID", "ObservationDate", "ObservationTime", "SampleID", "Longitude" )])
+
+Longitude_hist <- ggplot(uniquesites, aes(x=Longitude)) + 
+  geom_histogram() +
+  theme_bw() + 
+  xlab("Longitude")
+Longitude_hist
+
+"Summary statistics of longitude:"
+summary(uniquesites$Longitude)
+
+
+```
+
+**Fig. 3.** Histogram and probability distribution of Depth.  
+```{r hist of depth, fig.height = 4, fig.width = 7, echo = FALSE}
+
+# create unique sites
+uniquesites <- unique(survey_df[, c("SurveyID", "ObservationDate", "ObservationTime", "SampleID", "DepthInMeters" )]) 
+
+
+depth_hist <- ggplot(uniquesites, aes(x=DepthInMeters)) + 
+  geom_histogram() +
+  geom_density(alpha = 0.2) +
+  theme_bw() + xlab("Depth (m)")
+
+"Summary statistics of depth (m)"
+summary(uniquesites$DepthInMeters)
+
+
+depth_hist
+
+```
+**Fig. 4.** Plot of ObservationDate  
+```{r plot of observation date, fig.height = 4, fig.width = 7, echo = FALSE}
+options(stringsAsFactors = FALSE)
+
+# create unique sites
+uniquesites <- unique(survey_df[, c("SurveyID", "ObservationDate", "ObservationTime", "SampleID" )]) 
+uniquesites$ObservationDate <- as.Date(uniquesites$ObservationDate, "%m/%d/%Y",) 
+
+
+date_freq <- uniquesites |>
+  group_by(ObservationDate) |>
+  summarise(freq = n())
+
+obs_date_plot <- ggplot(date_freq, aes(x = ObservationDate, y = freq)) +
+                        geom_bar(stat = "identity") +
+                        labs(title = "Frequency of Observations by Date", x = "Observation Date", y = "Frequency") +
+                        theme_minimal() +
+                        scale_x_date(date_labels = "%Y-%m-%d", date_breaks = "1 day") +
+                        theme(axis.text.x = element_text(angle = 45, hjust = 1))
+"Summary statistics of Observation Date"
+summary(uniquesites$ObservationDate)
+
+
+obs_date_plot
+
+```
+
+**Fig. 5.** Plot of Observation Date and Time.  
+```{r plot of observation time, fig.height = 4, fig.width = 7, echo = FALSE}
+# create unique sites
+uniquesites <- unique(survey_df[, c("SurveyID", "ObservationDate", "ObservationTime", "SampleID" )]) 
+uniquesites$ObservationDate <- as.Date(uniquesites$ObservationDate, "%m/%d/%Y",) 
+uniquesites$ObservationTime <- as.POSIXct(uniquesites$ObservationTime, format = "%H:%M:%S")
+
+obs_time_plot <- ggplot(uniquesites, aes(x = ObservationDate, y = ObservationTime)) +
+                        geom_point() +
+                        labs(title = "Observation Date vs Time", x = "Observation Date", y = "Observation Time (Hour)") +
+                        theme_minimal() +
+                        scale_x_date(date_labels = "%Y-%m-%d", date_breaks = "1 day") +
+                        scale_y_datetime(date_labels = "%H", date_breaks = "1 hour") +
+                        theme(axis.text.x = element_text(angle = 45, hjust = 1))
+"Summary statistics of Observation Time."
+summary(uniquesites$ObservationTime)
+
+
+obs_time_plot
+
+### FIX Y AXIS ###
+```
+
+**Fig. 10.** Histogram and probability distribution of Temperature.  
+```{r hist of temperature, fig.height = 4, fig.width = 7, echo = FALSE}
+
+# create unique sites
+uniquesites <- unique(survey_df[, c("SurveyID", "ObservationDate", "ObservationTime", "SampleID", "Temperature" )]) 
+
+
+temp_hist <- ggplot(uniquesites, aes(x=Temperature)) + 
+  geom_histogram() +
+  geom_density(alpha = 0.2) +
+  theme_bw() + xlab("Temperature (C)") + ylab("Count")
+
+"Summary statistics of Temperature (C)"
+summary(uniquesites$Temperature)
+
+
+temp_hist
+
+```
+
+**Fig. 11.** Histogram and probability distribution of Salinity.  
+```{r hist of salinity, fig.height = 4, fig.width = 7, echo = FALSE}
+
+# create unique sites
+uniquesites <- unique(survey_df[, c("SurveyID", "ObservationDate", "ObservationTime", "SampleID", "Salinity" )]) 
+
+
+salinity_hist <- ggplot(uniquesites, aes(x=Salinity)) + 
+  geom_histogram() +
+  geom_density(alpha = 0.2) +
+  theme_bw() + xlab("Salinity") + ylab("Count") # needs units
+
+"Summary statistics of depth (m)"
+summary(uniquesites$Salinity)
+
+
+salinity_hist
+
+```
+
+**Fig. 12.** Histogram and probability distribution of Oxygen.  
+```{r hist of oxygen, fig.height = 4, fig.width = 7, echo = FALSE}
+
+# create unique sites
+uniquesites <- unique(survey_df[, c("SurveyID", "ObservationDate", "ObservationTime", "SampleID", "Oxygen" )]) 
+
+
+ox_hist <- ggplot(uniquesites, aes(x=Oxygen)) + 
+  geom_histogram() +
+  geom_density(alpha = 0.2) +
+  theme_bw() + xlab("Oxygen") + ylab("Count") # needs units
+
+"Summary statistics of depth (m)"
+summary(uniquesites$Oxygen)
+
+
+ox_hist
+```
+
+# Check Values
+
+```{r}
+print("CMECS Geoform")
+print(unique(survey_df$CMECSGeoForm))
+
+```
+
+
+```{r}
+
+print("Habitat")
+print(unique(survey_df$Habitat))
+
+```
+
+
+```{r}
+
+print("Substrate")
+#print(unique(survey_df$Substrate))
+
+```
+
+# Things to add: Indivudal counts are all numeric and categorical abundance is all categorical and makes sense. 
+
+
+
+# Plot Map - potential uupdate, color dive sites by dive number
+```{r}
+
+plt_df = unique(survey_df |> select(SurveyID, Station, Latitude, Longitude))
+
+basemap(limits = c(-154, -130, 53, 61), bathymetry = TRUE, rotate = TRUE) + 
+  ggspatial::geom_spatial_point(data = plt_df, aes(x = Longitude, y = Latitude), color = "red")
+```
+
+
+# Compare with OBIS Dataset - note this takes hours to run.
+
+```{r}
+library(robis)
+```
+
+```{r}
+get_occurences <- check_aphiaid_near_location <- function(aphiaid) {
+  # Fetch occurrence data for the given AphiaID
+  occurrences <- occurrence(taxonid = aphiaid)
+  return(occurrences = occurrences)
+}
+
+check_distances <- function(aphiaid, occurrences, samples_df, radius = 0.5, print_map = FALSE){
+  subset_df = samples_df[samples_df$AphiaID == aphiaid, ]
+  latitudes = subset_df$Latitude
+  longitudes = subset_df$Longitude
+  subset_df[, "Distance"] = NA
+  if (nrow(occurrences) != 0) {
+    print(nrow(occurrences))
+    for (dist in 1:length(latitudes)){
+      subset_df[dist,]$Distance = min(geosphere::distHaversine(
+      matrix(c(longitudes[dist], latitudes[dist]), ncol = 2),
+      matrix(c(occurrences$decimalLongitude, occurrences$decimalLatitude), ncol = 2)
+    ) / 1000 )
+    }
+  }
+  return(subset_df)
+}
+
+check_aphiaid_near_location <- function(occurences, subset_df, radius, output_dir, print_map = FALSE) {
+  aphiaid = subset_df$AphiaID[1]
+  num_found = sum(subset_df$Distance <= radius)
+  # print(subset_df$Genus[1], subset_df$Species[1])
+  print(paste("Found", num_found, "samples within", radius, "km"))
+  if (num_found > 0){
+    found = TRUE
+    write(paste(cat(aphiaid[1]), cat(num_found[1])), paste0(output_dir, "found.csv"))
+  } else {
+    found = FALSE
+    write(paste0(aphiaid[1], num_found[1]), file = paste0(output_dir, "checked.csv"))  }
+  if (print_map) {
+    map_leaflet(occurrences)
+  }
+  return(found)
+}
+```
+
+
+```{r}
+<- survey_df$AphiaID
+samples_df = survey_df |> select(AphiaID, Genus, Species, Latitude, Longitude)
+output_dir = "../data/aphiaid/"
+for (i in 6:length(aphiaids)){
+  radius = 0.5
+  print(i)
+  aphiaid = aphiaids[i]
+  print(paste("Aphia ID:", aphiaid))
+  occurrences <- get_occurences(aphiaid)
+  # radius is in km
+  subset_df <- check_distances(aphiaid, occurrences, samples_df, radius = radius)
+  found <- check_aphiaid_near_location(occurrences, subset_df, radius, output_dir)
+  if (found) {
+    write.csv(occurrences, file = paste(output_dir, "aphiaid_",aphiaid, "_occurences.csv", sep=""))
+    write.csv(subset_df, file = paste(output_dir, "aphiaid_",aphiaid, "_survey.csv", sep=""))
+    write.csv(paste0(aphiaid, ""))
+    # if (print_map) {
+    #   map_leaflet(occurrences)
+    # }
+  }
+}
+
+check_aphiaid_near_location
+print(results)
+```
+
+# Reformat and export data
+```{r}
+
+# Load SeaTube Template  
+
+tmp <- read.csv("C:/Users/sarah.groves/Documents/Data/Seatube/SeaTube Template.csv")
+
+# Create a bioogical dataframe
+dat1 <- survey_df |>
+  # Subset Biological observations and metadata
+  dplyr::select(SurveyID, Station, Latitude, Longitude, DepthInMeters, ScientificName, Phylum, Class, Subclass, Order, Suborder, Family, Subfamily, Genus, Subgenus, Species, Morphospecies, ReporterEmail, IdentificationDate, IdentificationQualifier, ObservationDate, IndividualCount, ObservationTime, CategoricalAbundance, VerbatimSize, MinimumSize, MaximumSize, Condition, AssociatedTaxa, OccurrenceComments, LocationAccuracy) |>
+  # Add in values from the TaxonRank column that do not have a column of their own
+  dplyr::mutate(Gigaclass = NA_character_,
+                Infraorder = NA_character_,
+                Kingdom = NA_character_,
+                Superfamily = NA_character_,
+                Infraclass = NA_character_,
+                Subspecies = NA_character_,
+                Superclass = NA_character_,
+                Superorder = NA_character_,
+                Subphylum = NA_character_)
+
+# Create a vector of the Taxon Rank values
+
+TaxonRank <- c("Phylum", "Class", "Subclass", "Order", "Suborder", "Family", "Subfamily", "Genus", "Subgenus", "Species")
+
+export <- dat1 |>
+# Pivot to long & add TaxonRank column
+  tidyr::pivot_longer(cols = c(TaxonRank), names_to = "TaxonRank", values_to = "Taxon2") |>
+   dplyr::group_by(SurveyID, Station, Latitude, Longitude, DepthInMeters) |> 
+  # Get rid of the lowest taxa so we can get to the 2nd lowest taxa
+  dplyr::filter(ScientificName != Taxon2) |>
+  # Select the last value after an NA - now the 2nd lowest taxonomic level 
+  mutate(next_lowest = last(na.locf(Taxon2,fromLast=F, na.rm = T)))
+  
+# We are looking for the second to lowest taxonomic rank, so filter out NAs
+  dplyr::filter(!is.na(Taxon2)) |>
+  
+  
+test <- 
+# Create a substrate dataframe
+substrate <- survey_df |>
+  # Subset substrate and metadata
+  dplyr::select(SurveyID, Station, Latitude, Longitude, DepthInMeters, Habitat, Substrate, CMECSGeoForm, ReporterEmail, IdentificationDate, IdentificationQualifier, ObservationDate, IndividualCount, ObservationTime, LocationAccuracy)
+
+# taxonomy = always "WORMS"
+# parent taxon = ScientificName
+# taxon = 1 level up from scientific name
+# NOAA Biology/Morphospecies = Morphospecies
+# creator email = ReporterEmail
+# creation timestamp = IdentificationDate
+# NOAA Biology/Identification Qualifier = IdentificationQualifier
+# annotation timestamp = ObservationDate + ObservationTime
+# NOAA Biology/Individual Count = IndividualCount
+# NOAA Biology/Categorical Abundance = CategoricalAbundance
+# NOAA Biology/Verbatim Size = VerbatimSize
+# NOAA Biology/Minimum Size = MinimumSize
+# NOAA Biology/Maximum Size = MaximumSize
+# NOAA Biology/Condition = Condition 
+# NOAA Biology/Associated Taxa = AssociatedTaxa
+# comments = OccurenceComments
+# NOAA Biology/Location Accuracy = LocationAccuracy
+# NOAA Biology/Record Type = RecordType
+```
+
