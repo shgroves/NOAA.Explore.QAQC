@@ -1,7 +1,8 @@
 ---
 title: "Clean & Reformat data: DARC to SeaTube"
 output: html_document
-date: "2024-09-20"
+date: "`r Sys.Date()`"
+author: "Claire Hsieh with support from Sarah Groves"
 ---
 
 ```{r setup, include=FALSE}
@@ -788,22 +789,14 @@ tmp <- read.csv("C:/Users/sarah.groves/Documents/Data/Seatube/SeaTube Template.c
 dat1 <- survey_df |>
   # Subset Biological observations and metadata
   dplyr::select(SurveyID, Station, Latitude, Longitude, DepthInMeters, ScientificName, Phylum, Class, Subclass, Order, Suborder, Family, Subfamily, Genus, Subgenus, Species, Morphospecies, ReporterEmail, IdentificationDate, IdentificationQualifier, ObservationDate, IndividualCount, ObservationTime, CategoricalAbundance, VerbatimSize, MinimumSize, MaximumSize, Condition, AssociatedTaxa, OccurrenceComments, LocationAccuracy) |>
-  # Add in values from the TaxonRank column that do not have a column of their own
-  dplyr::mutate(Gigaclass = NA_character_,
-                Infraorder = NA_character_,
-                Kingdom = NA_character_,
-                Superfamily = NA_character_,
-                Infraclass = NA_character_,
-                Subspecies = NA_character_,
-                Superclass = NA_character_,
-                Superorder = NA_character_,
-                Subphylum = NA_character_)
+  # Get rid of the ".sp" in the Scientific Name column
+  dplyr::mutate(ScientificName = sub(".sp.*", "", `ScientificName`))
 
 # Create a vector of the Taxon Rank values
-
 TaxonRank <- c("Phylum", "Class", "Subclass", "Order", "Suborder", "Family", "Subfamily", "Genus", "Subgenus", "Species")
 
-export <- dat1 |>
+# Create a dataframe of the second lowest taxa for the "taxon" column
+second_taxa <- dat1 |>
 # Pivot to long & add TaxonRank column
   tidyr::pivot_longer(cols = c(TaxonRank), names_to = "TaxonRank", values_to = "Taxon2") |>
    dplyr::group_by(SurveyID, Station, Latitude, Longitude, DepthInMeters) |> 
@@ -811,16 +804,8 @@ export <- dat1 |>
   dplyr::filter(ScientificName != Taxon2) |>
   # Select the last value after an NA - now the 2nd lowest taxonomic level 
   mutate(next_lowest = last(na.locf(Taxon2,fromLast=F, na.rm = T)))
-  
-# We are looking for the second to lowest taxonomic rank, so filter out NAs
-  dplyr::filter(!is.na(Taxon2)) |>
-  
-  
-test <- 
-# Create a substrate dataframe
-substrate <- survey_df |>
-  # Subset substrate and metadata
-  dplyr::select(SurveyID, Station, Latitude, Longitude, DepthInMeters, Habitat, Substrate, CMECSGeoForm, ReporterEmail, IdentificationDate, IdentificationQualifier, ObservationDate, IndividualCount, ObservationTime, LocationAccuracy)
+
+
 
 # taxonomy = always "WORMS"
 # parent taxon = ScientificName
